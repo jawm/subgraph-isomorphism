@@ -143,4 +143,23 @@ as you wind back up. I guess that's basically how we'd do it, since the call
 stack should kind of just be linear since we're doing this weird BFS type 
 thing.
 
+Tomorrow I need to:
+    - figure out why it's infinitely looping
+    - maybe make it so we cluster the groups based on which parent groups they
+      descend from. That way, we can rectify splits straight away?
+    - write the splitting code
+    - write code to repeat the process with the next level in BFS
+    - write code that builds a full graph while unwinding once we hit the 
+      bottom
+    - Once we've got the graph, repeat the whole thing over the new graph, 
+      and keep repeating until the graph is a tree.
+    - ... profit?
 
+gn :)
+
+--- the next day ---
+
+Ok, so the infite loop thing was easy.
+
+As to clustering groups based on which parents they descend from, it shouldn't
+be too difficult, but the code will probably be nasty... let's go

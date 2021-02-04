@@ -71,7 +71,7 @@ def combine_structures(seen, sec_graph, groups):
     This recursive function will combine compatible parts of an sec_graph, producing a new sec_graph
 
     seen: a set of nodes in the sec_graph. If a node is in the set it has already been processed in this
-        call to combine_structures. At the top level simply provide an empty set
+        call to combine_structures. At the top level simply provide set with the start group as True
     sec_graph: a graph of SEC nodes which we want to combine
     groups: the groups we actually want to work on now.
 
@@ -81,20 +81,34 @@ def combine_structures(seen, sec_graph, groups):
 
 
     # 1. combine all children from all groups
-    child_groups = defaultdict(lambda: [])
+    
+    # 1.1 we want these groups to be clustered so that all nodes in a group have the same set of parent groups
+    # we will store as a dict, where the keys are tuples of the parent groups, and values are sets of groups
+    known_parent_clusters = defaultdict(lambda: set())
+
     for group in groups:
-        print("neighbors", group, sec_graph[group])
-        for neighbour in sec_graph[group]:
-            if neighbour in seen:
+        for possible_child in sec_graph[group]:
+            if possible_child in seen:
                 continue
-            child_groups[neighbour.label].append(neighbour)
+            parents = tuple(p for p in sec_graph[possible_child] if p in seen)
+            known_parent_clusters[parents].add(possible_child)
+
+    print("after 1.1", known_parent_clusters)
+    
+    # todo probably remove below code
+    # child_groups = defaultdict(lambda: [])
+    # for group in groups:
+    #     for neighbour in sec_graph[group]:
+    #         if neighbour in seen:
+    #             continue
+    #         child_groups[neighbour.label].append(neighbour)
 
     # 2. split children according to rules
     
     # 2.1 Nodes in a group must have the same label
     # When building the set of children groups we developed this already, so no changes need made
 
-    print("child groups after 2.1", child_groups)
+    print("after 2.1", child_groups)
 
     # 2.2 Nodes in a group must have the same degree
     child_groups_swap = defaultdict(lambda: [])
@@ -104,7 +118,7 @@ def combine_structures(seen, sec_graph, groups):
             child_groups_swap[f"{sec.label}{deg}"].append(sec)
     child_groups = child_groups_swap
 
-    print("child groups after 2.2", child_groups)
+    print("after 2.2", child_groups)
 
     # 2.3 Nodes in a group must have the same number of neighbours with each label
     child_groups_swap = defaultdict(lambda: [])
@@ -117,7 +131,7 @@ def combine_structures(seen, sec_graph, groups):
                 break
     child_groups = child_groups_swap
 
-    print("child groups after 2.3", child_groups)
+    print("after 2.3", child_groups)
 
     # 2.4 If any nodes in a group are connected to each other, all nodes must be connected to each other.
     child_groups_swap = defaultdict(lambda: [])
@@ -132,9 +146,7 @@ def combine_structures(seen, sec_graph, groups):
 
     child_groups = child_groups_swap
 
-    print("child groups after 2.4", child_groups)
-
-
+    print("after 2.4", child_groups)
 
     # 3. if a split broke things, then split that thing in next_graph, return False
 
@@ -193,10 +205,11 @@ def get_SEC(graph, start_node):
 
     # First argument doesn't matter here, since we know it will *never* be split
     while True:
-        combine_structures({}, sec_graph, [start])
+        combine_structures({start: True}, sec_graph, [start])
         # TODO uncomment below code instead of above single line
         # sec_graph = combine_structures({}, sec_graph, [start])
         # if nx.algorithms.is_tree(sec_graph): # todo work out how to call this
         #     break
+        break
 
     return sec_graph
