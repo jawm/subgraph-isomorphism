@@ -1,0 +1,17 @@
+The main focus of the research is, I think the building of the SECTree from the query graph.
+If you can do that, the rest should, I think be fairly straightforward.
+
+Let's assume that the root node is already identified somehow, perhaps just having a policy
+of trying all nodes as the root node, and deciding which resultant SECTree is the best based
+on the number of permutations it will yield per matching.
+
+So, given this root node, how do we proceed?
+
+To start we should try to define the actual structure of the SECTree. That way we'll know 
+what we're going for at least.
+
+So, I think I'll stick with the idea that the SECTree will be made up of containers and nodes.
+The nodes will once again map to nodes in the query graph. This means that a given node in the
+SECTree will have a label, and it will have a list of query nodes with which it is associated.
+SECNodes are held in containers. Containers have a given replication count which is used to
+indicate how the nodes get split up into their original structure.

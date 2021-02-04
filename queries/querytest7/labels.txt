@@ -1,0 +1,8 @@
+*vertices 9
+a
+b
+d
+c
+e
+e
+e

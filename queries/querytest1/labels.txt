@@ -1,0 +1,4 @@
+*vertices 3
+a
+b
+c

@@ -1,0 +1,4 @@
+*Vertices 3774768
+*Arcslist
+1 2
+2 3
