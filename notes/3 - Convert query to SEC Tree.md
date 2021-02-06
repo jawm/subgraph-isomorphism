@@ -182,3 +182,10 @@ Anyways that seems to be fixed, so back to building up the graph :)
 Ok, so we're getting something rendering but it looks a little... different?
 Seems like things aren't connecting up with each other very well...
 
+Well, with a bunch of fiddling, I've gotten it to generate the next level of 
+the graph :)
+
+Now the other day I was thinking about repeating the process. Before I'd said
+that we would repeat until the graph we were left with was a tree, but on 
+reflection I realise that doesn't make sense. Instead we will continue until
+the number of nodes in the new graph is equal to the number in the old graph.
