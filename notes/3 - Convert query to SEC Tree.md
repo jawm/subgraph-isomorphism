@@ -163,3 +163,22 @@ Ok, so the infite loop thing was easy.
 
 As to clustering groups based on which parents they descend from, it shouldn't
 be too difficult, but the code will probably be nasty... let's go
+
+Done...
+
+--- the next day ---
+
+So I got that todo list mostly done yesterday, but I now see that ther's a 
+slight issue with it, it seems as if the same node was appearing multiple 
+time in the child groups...
+
+Turns out it was just a bug, needed to check if it had already been identified
+during 1.1 before adding it to the cluster thingy.
+
+Anyways that seems to be fixed, so back to building up the graph :)
+
+...
+
+Ok, so we're getting something rendering but it looks a little... different?
+Seems like things aren't connecting up with each other very well...
+
