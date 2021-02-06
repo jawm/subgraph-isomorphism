@@ -269,7 +269,7 @@ def get_SEC(graph, start_node):
 
     # First argument doesn't matter here, since we know it will *never* be split
     print()
-    print(visualise_SEC_graph(sec_graph))
+    print(visualise_SEC_graph(sec_graph, start))
     while True:
         s = SEC([start], start.label)
         _, new_sec_graph = combine_structures({start: True}, sec_graph, [s])
@@ -278,29 +278,34 @@ def get_SEC(graph, start_node):
         sec_graph = new_sec_graph
         start = s
         print()
-        print(visualise_SEC_graph(sec_graph))
-
-    print()
-    print(visualise_SEC_graph(sec_graph))
+        print(visualise_SEC_graph(sec_graph, start))
 
     return sec_graph
 
-def visualise_SEC_graph(sec_graph):
-    nodes = get_node_strings(sec_graph)
-    edges = get_edge_strings(sec_graph)
+def visualise_SEC_graph(sec_graph, start):
     return f"""digraph G {{
-{nodes}
-{edges}
+{_visualise_SEC_graph_rec({start: True}, sec_graph, [start])}
 }}"""
 
-def get_node_strings(sec_graph):
+def _visualise_SEC_graph_rec(seen, sec_graph, nodes):
     res = ""
-    for nd in sec_graph.nodes:
-        res = f"{res}\n{nd.global_id} [label=\"{nd.label}x{len(nd.members)}\"]"
-    return res
+    next_seen = seen.copy()
+    nodes2 = []
+    for nd in nodes:
+        res = f"{res}\n{nd.global_id} [label=\"{nd.label}\"]"
+        for nd2 in sec_graph[nd]:
+            if nd2 in seen:
+                continue
+            res = f"{res}\n{nd.global_id}->{nd2.global_id};"
+            # for nd2 in sec_graph.nodes:
+            #     if nd not in seen:
+            #         continue
+            #     res = f"{res}\n{nd2.global_id}->{nd.global_id};"
+            next_seen[nd2] = True
+            if nd2 in nodes2:
+                continue
+            nodes2.append(nd2)
+    if len(nodes2) > 0:
+        res = f"{res}\n{_visualise_SEC_graph_rec(next_seen, sec_graph, nodes2)}"
 
-def get_edge_strings(sec_graph):
-    res = ""
-    for u, v in sec_graph.edges():
-        res = f"{res}\n{v.global_id}->{u.global_id};"
     return res
