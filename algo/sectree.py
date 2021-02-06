@@ -84,7 +84,7 @@ def combine_structures(seen, sec_graph, higher_level_secs):
 
     """
 
-    print("after 0.0", higher_level_secs)
+    # print("after 0.0", higher_level_secs)
 
     groups = []
     for high_lvl_sec in higher_level_secs:
@@ -99,7 +99,6 @@ def combine_structures(seen, sec_graph, higher_level_secs):
 
     # print("h", groups)
     for group in groups:
-        # print("e", group)
         for possible_child in sec_graph[group]:
             if possible_child in seen:
                 continue
@@ -108,19 +107,18 @@ def combine_structures(seen, sec_graph, higher_level_secs):
                 clusters[parents][possible_child.label].append(possible_child)
 
     if len(clusters) == 0:
-        print("bottomed out?")
-        # TODO at some point figure out what we actually want to fucking return yeah?
+        # print("bottomed out?")
         g = nx.Graph()
         for high_lvl_sec in higher_level_secs:
             g.add_node(high_lvl_sec)
         return -1, g
 
-    print("after 1.1", clusters)
+    # print("after 1.1", clusters)
     
     # 2.1 Nodes in a group must have the same label
     # When building the set of children groups we developed this already, so no changes need made
 
-    print("after 2.1", clusters)
+    # print("after 2.1", clusters)
 
     # 2.2 Nodes in a group must have the same degree
     for parents, cluster in clusters.items():
@@ -138,7 +136,7 @@ def combine_structures(seen, sec_graph, higher_level_secs):
             # TODO actually do something here
         clusters[parents] = split_groups
 
-    print("after 2.2", clusters)
+    # print("after 2.2", clusters)
 
     # 2.3 Nodes in a group must have the same number of neighbours with each label
     for parents, cluster in clusters.items():
@@ -156,7 +154,7 @@ def combine_structures(seen, sec_graph, higher_level_secs):
             # TODO actually do something here
         clusters[parents] = split_groups
 
-    print("after 2.3", clusters)
+    # print("after 2.3", clusters)
 
     # 2.4 If any nodes in a group are connected to each other, all nodes must be connected to each other.
     for parents, cluster in clusters.items():
@@ -185,7 +183,7 @@ def combine_structures(seen, sec_graph, higher_level_secs):
             # print("after the breaking split check...")
         clusters[parents] = split_groups
 
-    print("after 2.4", clusters)
+    # print("after 2.4", clusters)
 
     # 3. if a split broke things, then split that thing in next_graph, return False
 
@@ -210,42 +208,7 @@ def combine_structures(seen, sec_graph, higher_level_secs):
         print("A SPLIT IS NEEDED YOU'd BETTER DEAL WITH IT BROOO")
         pass
     
-
-    print("after recurse", clusters)
-
     # 5. Add groups and edges to the graph
-    
-    # 5.1 add the groups that were given to us
-    # i don't think it makes sense for us to be adding the groups, since it's just a flat array, and we don't know how it's actually clustered at the parent level. maybe we should pass the clusters in instead?
-    # for group in groups:
-    #     new_graph.add_node(group)
-
-    # 5.2 add edges between those groups and the groups we generated
-    # for parents, cluster in clusters.items():
-    #     for parent in parents:
-    #         parent_group = None
-    #         for group in groups:
-    #             if parent in group:
-    #                 parent_group = group
-    #                 break
-            
-    #         for _, child_group in cluster.items():
-    #             s = SEC(child_group, child_group[0].label)
-    #             print("ADDING EDGE TO GRAPH", parent, s, parent.label, [nd.label for nd in child_group])
-    #             new_graph.add_edge(parent_group, s)
-
-    # for parents, cluster in clusters.items():
-    #     for _, child_group in cluster.items():
-    #         s = SEC(child_group, child_group[0].label)
-    #         new_graph.add_node(s)
-    #         for node in new_graph.nodes:
-    #             if s == node:
-    #                 continue
-    #             for child_sec in node.members:
-    #                 for sec in child_group:
-    #                     if sec_graph.has_edge(sec, child_sec):
-    #                         new_graph.add_edge(s, node)
-
     for high_lvl_sec in higher_level_secs:
         for sec in high_lvl_sec.members:
             for new_sec in new_secs:
@@ -305,15 +268,19 @@ def get_SEC(graph, start_node):
     sec_graph, start = _build_initial_sec_graph(graph, start_node)
 
     # First argument doesn't matter here, since we know it will *never* be split
+    print()
+    print(visualise_SEC_graph(sec_graph))
     while True:
-        _, sec_graph = combine_structures({start: True}, sec_graph, [SEC([start], start.label)])
-        # TODO uncomment below code instead of above single line
-        # sec_graph = combine_structures({}, sec_graph, [start])
-        # if nx.algorithms.is_tree(sec_graph): # todo work out how to call this
-        #     break
-        break
+        s = SEC([start], start.label)
+        _, new_sec_graph = combine_structures({start: True}, sec_graph, [s])
+        if len(new_sec_graph) == len(sec_graph):
+            break
+        sec_graph = new_sec_graph
+        start = s
+        print()
+        print(visualise_SEC_graph(sec_graph))
 
-    print("ree")
+    print()
     print(visualise_SEC_graph(sec_graph))
 
     return sec_graph
