@@ -60,7 +60,7 @@ class Nd:
         return True
 
 def _build_initial_sec_graph(graph, start_node):
-    sec_graph = nx.Graph() # todo maybe this should be directed?
+    sec_graph = nx.Graph()
     mapping = {}
     for nd in graph.nodes:
         mapping[nd] = SEC([nd], graph.nodes[nd]["lbl"])
@@ -86,10 +86,16 @@ def combine_structures(seen, sec_graph, higher_level_secs):
 
     # print("after 0.0", higher_level_secs)
 
+    high_lvl_sec_mapping = defaultdict(lambda: set())
+
     groups = []
     for high_lvl_sec in higher_level_secs:
         for sec in high_lvl_sec.members:
+            high_lvl_sec_mapping[sec].add(high_lvl_sec)
             groups.append(sec)
+
+    # the sets need to be frozensets so that they can be hashed yeh
+    high_lvl_sec_mapping = {k: frozenset(v) for k, v in high_lvl_sec_mapping.items()}
 
     # 1. combine all children from all groups
     
@@ -98,11 +104,15 @@ def combine_structures(seen, sec_graph, higher_level_secs):
     clusters = defaultdict(lambda: defaultdict(lambda: []))
 
     # print("h", groups)
+
     for group in groups:
         for possible_child in sec_graph[group]:
             if possible_child in seen:
                 continue
-            parents = tuple(p for p in sec_graph[possible_child] if p in seen)
+            # parents = tuple(p for p in sec_graph[possible_child] if p in seen)
+            parents = tuple(high_lvl_sec_mapping[p] for p in sec_graph[possible_child] if p in seen)
+            # todo at this point we actually want to check if the `parents` group is compat with higher_lvl_sec??
+
             if possible_child not in clusters[parents][possible_child.label]:
                 clusters[parents][possible_child.label].append(possible_child)
 
@@ -169,11 +179,13 @@ def combine_structures(seen, sec_graph, higher_level_secs):
                 if len(child_group) == 0:
                     break
         if len(split_groups) > len(cluster):
-            # print("a split occured")
+            print("a split occured")
             # at this point we know that a group got split, since there's more than there was previously
             # so, what we'll do is loop over the new groups
             # for each of these groups, we check that it is still connected to *all* parents
             # if there is any of the parents to which it is not connected, then a breaking split has occured and it will need propagated
+
+            # todo this is actually all wrong, since the sec_graph input is already known to be correct. instead we want to check if there was a split in the higher_level_secs or something
             for lbl, group in split_groups.items():
                 for sec in group:
                     for parent in parents:

@@ -192,3 +192,39 @@ the number of nodes in the new graph is equal to the number in the old graph.
 
 
 IT WORKS!!!!!!!!!!!!!!!!!!
+
+--- like a week passes... ---
+
+Ok, where were we??? 
+
+Let's try to understand why the C nodes weren't getting merged at the same 
+time as the B nodes. That seems like a bug which could lead to incorrect 
+conversions to occur in some cases.
+
+The issue is that since we cluster the nodes based on their parents, and the C
+nodes actually don't share parents, so they won't be merged at that stage. So
+what we need to do is check whether the parents of the C nodes are all 
+considered compatible. So this means that if all parents of node C1 are in a 
+member of the higher_lvl_sec, and all the parents of node C2 are in another, 
+different member of higher_lvl_sec, then we know they're compatible. Otherwise
+I guess they're not...? And you might need to split...?
+
+
+Hmm... I've drawn out a new query (querytest23) to help think about this, and
+it's looking like the end result of this conversion may not be a tree at all,
+but rather a directed acyclic graph. I'm not sure how I feel about that. Also,
+when I run my existing code on that query it's very broken. Like some nodes 
+completely disappear... so yeah, definitely some work to be done here still.
+
+Let's start by trying to resolve this issue with the clustering. I think that 
+as a first step, we'll be more lenient in how we merge children based on their
+parents. In the current version, the children need to have the exact same set
+of parents. In the new version, we'll allow them to be merged so long as all 
+parents of child1 correspond to parents of child2 in the same higher 
+level SEC which we received as an argument to the function. Sounds confusing, 
+might be easier to just write the code lol.
+
+I suppose we also need to decide what to do if the children *don't* turn out 
+to descend from parents in the same higher level SECs. Actually I don't think
+that even makes sense... Let's just try writing some code and see what 
+happens.
