@@ -241,3 +241,7 @@ which I found out kind of accidentally by changing them so they were unique.
 This makes me slightly concerned that this might still be a bug which would
 show up in non-synthetic query graphs. At some point I should try to change 
 the clusters dictionary so that the key is properly unique.
+
+At this point I'm also pretty confident that our SECTree will actually be an
+SECDAG. Gonna need a better name for that I think.
+

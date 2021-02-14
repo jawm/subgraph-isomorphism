@@ -142,7 +142,7 @@ def combine_structures(seen, sec_graph, higher_level_secs):
         # if they have, we need to check if that's going to trigger a split in the parents. 
         # if it does we'll return a result indicating that to the caller?
         if len(split_groups) > len(cluster):
-            print("a split occurred")
+            print("a split occurred 2.2")
             # TODO actually do something here
         clusters[parents] = split_groups
 
@@ -160,7 +160,7 @@ def combine_structures(seen, sec_graph, higher_level_secs):
                 if len(child_group) == 0:
                     break
         if len(split_groups) > len(cluster):
-            print("a split occured")
+            print("a split occured 2.3")
             # TODO actually do something here
         clusters[parents] = split_groups
 
@@ -179,19 +179,48 @@ def combine_structures(seen, sec_graph, higher_level_secs):
                 if len(child_group) == 0:
                     break
         if len(split_groups) > len(cluster):
-            print("a split occured")
+            print("a split occured 2.4")
+            
+            # start by getting all the parents in the higher_lvl_sec for each group.
+            group_parent_sets = []
+            for _, group in split_groups.items():
+                group_all_higher_lvl_parents = set()
+                for sec in group:
+                    higher_lvl_parents = set(high_lvl_sec_mapping[p] for p in sec_graph[sec] if p in seen)
+                    group_all_higher_lvl_parents = group_all_higher_lvl_parents.union(higher_lvl_parents)
+                group_parent_sets.append(group_all_higher_lvl_parents)
+            
+            # once we have that we want to find all common parents from each group.
+            # we keep looping until we've got it fully split out
+            new_parent_high_lvl_secs = []
+            idx = 0
+            while idx < len(group_parent_sets):
+                s = group_parent_sets[idx]
+                for parent_set in group_parent_sets[idx+1:]:
+                    s = s.intersection(parent_set)
+                if len(s) == 0:
+                    idx += 1
+                    continue
+                group_parent_sets.append(group_parent_sets[idx].copy())
+                group_parent_sets[idx] = s
+                for parent_set in group_parent_sets[idx+1:]:
+                    parent_set.difference_update(s)
+                idx += 1
+
+            if len(new_parent_high_lvl_secs) > len(higher_level_secs):
+                print("i think it broken yeh")
+
             # at this point we know that a group got split, since there's more than there was previously
             # so, what we'll do is loop over the new groups
             # for each of these groups, we check that it is still connected to *all* parents
             # if there is any of the parents to which it is not connected, then a breaking split has occured and it will need propagated
-
             # todo this is actually all wrong, since the sec_graph input is already known to be correct. instead we want to check if there was a split in the higher_level_secs or something
-            for lbl, group in split_groups.items():
-                for sec in group:
-                    for parent in parents:
-                        # print("checking edge", sec, parent)
-                        if not sec_graph.has_edge(sec, parent):
-                            print("BREAKING SPLIT OCCURRED THIS IS NOT A DRILL")
+            # for _, group in split_groups.items():
+            #     for sec in group:
+            #         for parent in parents:
+            #             # print("checking edge", sec, parent)
+            #             if not sec_graph.has_edge(sec, parent):
+            #                 print("BREAKING SPLIT OCCURRED THIS IS NOT A DRILL")
             # print("after the breaking split check...")
         clusters[parents] = split_groups
 
