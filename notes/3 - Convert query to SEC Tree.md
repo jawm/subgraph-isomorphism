@@ -228,3 +228,16 @@ I suppose we also need to decide what to do if the children *don't* turn out
 to descend from parents in the same higher level SECs. Actually I don't think
 that even makes sense... Let's just try writing some code and see what 
 happens.
+
+--- next day ---
+
+Ok, well I managed to get that working last night and it looks perfect on 
+QT18. However on QT23 it's breaking, so there's something wrong. For some 
+reason it seems like the `seen` mapping isn't being populated the way I'd
+expect.
+
+Ok, it turns out the issue was that keys in the dictionary weren't unique, 
+which I found out kind of accidentally by changing them so they were unique.
+This makes me slightly concerned that this might still be a bug which would
+show up in non-synthetic query graphs. At some point I should try to change 
+the clusters dictionary so that the key is properly unique.

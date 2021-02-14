@@ -109,7 +109,7 @@ def combine_structures(seen, sec_graph, higher_level_secs):
         for possible_child in sec_graph[group]:
             if possible_child in seen:
                 continue
-            # parents = tuple(p for p in sec_graph[possible_child] if p in seen)
+
             parents = tuple(high_lvl_sec_mapping[p] for p in sec_graph[possible_child] if p in seen)
             # todo at this point we actually want to check if the `parents` group is compat with higher_lvl_sec??
 
@@ -155,7 +155,7 @@ def combine_structures(seen, sec_graph, higher_level_secs):
         for lbl, child_group in cluster.items():
             while True:
                 lbl_matching_group, lbl_matching_counts, child_group = split_2_3(child_group, sec_graph)
-                group_lbl = "_".join(f"{k}:{v}" for k, v in sorted(lbl_matching_counts.items()))
+                group_lbl = f"{lbl} -> " + ",".join(f"{k}:{v}" for k, v in sorted(lbl_matching_counts.items()))
                 split_groups[group_lbl] = lbl_matching_group
                 if len(child_group) == 0:
                     break
