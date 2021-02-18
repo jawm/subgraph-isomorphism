@@ -174,10 +174,11 @@ def combine_structures(seen, sec_graph, higher_level_secs):
             # this will be the thing we return to the higher level, which it can use to figure out how to proceed
             new_higher_lvl_secs = []
             for high_lvl_sec, split_outs in to_split.items():
-                while len(high_lvl_sec.members) > 0:
-                    focus = high_lvl_sec.members[0]
+                cp = high_lvl_sec.members.copy()
+                while len(cp) > 0:
+                    focus = cp[0]
                     contains = (g for g in split_outs if focus in g)
-                    i = set(high_lvl_sec.members)
+                    i = set(cp)
                     i = i.intersection(*contains) # we get the items which always appear with focus
                     i.add(focus) # in case none of split_outs thought they should include `m`. Not sure if this is actually possible.
                     no_contains = (g for g in split_outs if focus not in g)
@@ -188,7 +189,7 @@ def combine_structures(seen, sec_graph, higher_level_secs):
                         split_out.difference_update(i)
 
                     # we can also update the members list so that these items won't be considered any further. They've been added to an SEC
-                    high_lvl_sec.members = [m for m in high_lvl_sec.members if m not in i]
+                    cp = [m for m in cp if m not in i]
 
                     # finally construct a new SEC with the split out items.
                     assert(len(i) > 0)
@@ -333,10 +334,11 @@ def combine_structures(seen, sec_graph, higher_level_secs):
         # this will be the thing we return to the higher level, which it can use to figure out how to proceed
         new_higher_lvl_secs = []
         for high_lvl_sec, split_outs in to_split.items():
-            while len(high_lvl_sec.members) > 0:
-                focus = high_lvl_sec.members[0]
+            cp = high_lvl_sec.members.copy()
+            while len(cp) > 0:
+                focus = cp[0]
                 contains = (g for g in split_outs if focus in g)
-                i = set(high_lvl_sec.members)
+                i = set(cp)
                 i = i.intersection(*contains) # we get the items which always appear with focus
                 i.add(focus) # in case none of split_outs thought they should include `m`. Not sure if this is actually possible.
                 no_contains = (g for g in split_outs if focus not in g)
@@ -347,7 +349,7 @@ def combine_structures(seen, sec_graph, higher_level_secs):
                     split_out.difference_update(i)
 
                 # we can also update the members list so that these items won't be considered any further. They've been added to an SEC
-                high_lvl_sec.members = [m for m in high_lvl_sec.members if m not in i]
+                cp = [m for m in cp if m not in i]
 
                 # finally construct a new SEC with the split out items.
                 assert(len(i) > 0)
@@ -360,17 +362,11 @@ def combine_structures(seen, sec_graph, higher_level_secs):
             print("going another")
             need_split, new_graph = combine_structures(next_seen, sec_graph, new_secs)
 
-    assert(len(need_split) == len(new_secs))
-    print("all good", len(new_secs))
-
     # 5. Add groups and edges to the graph
     for high_lvl_sec in higher_level_secs:
         # new_graph.add_node(high_lvl_sec) # todo we shouldn't have to do this... there should always be edges between things..
-        print(high_lvl_sec.label, [m.label for m in high_lvl_sec.members])
-        assert(len(high_lvl_sec.members) > 0)
         for sec in high_lvl_sec.members:
             for new_sec in need_split:
-                assert(len(new_sec.members) > 0)
                 for s in new_sec.members:
                     if sec_graph.has_edge(sec, s):
                         new_graph.add_edge(high_lvl_sec, new_sec)
