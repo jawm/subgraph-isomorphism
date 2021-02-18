@@ -86,7 +86,7 @@ def combine_structures(seen, sec_graph, higher_level_secs):
 
     # print("after 0.0", higher_level_secs)
 
-    high_lvl_sec_mapping = {} # defaultdict(lambda: set())
+    high_lvl_sec_mapping = {}
 
     groups = []
     for high_lvl_sec in higher_level_secs:
@@ -122,42 +122,41 @@ def combine_structures(seen, sec_graph, higher_level_secs):
 
     # print("after 1.1", clusters)
     
-    # 2.1 Nodes in a group must have the same label
-    # When building the set of children groups we developed this already, so no changes need made
+    # 2. Split up groups such that they satisfy our clustering rules.
 
-    # print("after 2.1", clusters)
-
-    # 2.2 Nodes in a group must have the same degree
     for parents, cluster in clusters.items():
-        # print("hello", parents, cluster)
+        # 2.2 Nodes in a group must have the same degree
         split_groups = defaultdict(lambda: [])
         for lbl, child_group in cluster.items():
             for sec in child_group:
                 deg = nx.degree(sec_graph, sec)
                 split_groups[f"{sec.label}{deg}"].append(sec)
-        # at this point, the child groups may have been split
-        # if they have, we need to check if that's going to trigger a split in the parents. 
-        # if it does we'll return a result indicating that to the caller?
-        if len(split_groups) > len(cluster):
-            print("a split occurred 2.2")
-            # TODO actually do something here
-        clusters[parents] = split_groups
+        cluster1 = split_groups
 
-    # print("after 2.2", clusters)
-
-    # 2.3 Nodes in a group must have the same number of neighbours with each label
-    for parents, cluster in clusters.items():
+        # 2.3 Nodes in a group must have the same number of neighbours with each label
         split_groups = defaultdict(lambda: [])
-        for lbl, child_group in cluster.items():
+        for lbl, child_group in cluster1.items():
             while True:
                 lbl_matching_group, lbl_matching_counts, child_group = split_2_3(child_group, sec_graph)
                 group_lbl = f"{lbl} -> " + ",".join(f"{k}:{v}" for k, v in sorted(lbl_matching_counts.items()))
                 split_groups[group_lbl] = lbl_matching_group
                 if len(child_group) == 0:
                     break
+        cluster1 = split_groups
+
+        # 2.4 If any nodes in a group are connected to each other, all nodes must be connected to each other.
+        split_groups = defaultdict(lambda: [])
+        for lbl, child_group in cluster1.items():
+            n = 0
+            while True:
+                matching_group, matching_lbl, child_group = split_2_4(child_group, sec_graph)
+                split_groups[f"{lbl}{matching_lbl}{n}"] = matching_group
+                n += 1
+                if len(child_group) == 0:
+                    break
+        
+        # Now that the rules have been applied, we can look for any breaking splits that occurred.
         if len(split_groups) > len(cluster):
-            # print("a split occured 2.3")
-            
             to_split = defaultdict(lambda: [])
 
             for _, group in split_groups.items():
@@ -194,103 +193,180 @@ def combine_structures(seen, sec_graph, higher_level_secs):
 
             if len(new_higher_lvl_secs) > len(clusters):
                 return new_higher_lvl_secs, None
-
-
-            ### -----
-
-
-            # start by getting all the parents in the higher_lvl_sec for each group.
-            # group_parent_sets = []
-            # for _, group in split_groups.items():
-            #     group_all_higher_lvl_parents = set()
-            #     for sec in group:
-            #         higher_lvl_parents = set(high_lvl_sec_mapping[p] for p in sec_graph[sec] if p in seen)
-            #         group_all_higher_lvl_parents = group_all_higher_lvl_parents.union(higher_lvl_parents)
-            #     group_parent_sets.append(group_all_higher_lvl_parents)
-
-            # # once we have that we want to find all common parents from each group.
-            # # we keep looping until we've got it fully split out
-            # idx = 0
-            # while idx < len(group_parent_sets):
-            #     s = group_parent_sets[idx]
-            #     for parent_set in group_parent_sets[idx+1:]:
-            #         s = s.intersection(parent_set)
-            #     if len(s) == 0:
-            #         idx += 1
-            #         continue
-            #     group_parent_sets.append(group_parent_sets[idx].copy())
-            #     group_parent_sets[idx] = s
-            #     for parent_set in group_parent_sets[idx+1:]:
-            #         parent_set.difference_update(s)
-            #     idx += 1
-
-            # print(group_parent_sets)
-            # print(higher_level_secs)
-            # if len(group_parent_sets) > len(higher_level_secs):
-            #     print("i think it broken yeh")
-            #     for sec in higher_level_secs:
-            #         print("broke parent", sec.label)
+        
         clusters[parents] = split_groups
 
-    # print("after 2.3", clusters)
 
-    # 2.4 If any nodes in a group are connected to each other, all nodes must be connected to each other.
-    for parents, cluster in clusters.items():
-        # print("hello", parents, cluster)
-        split_groups = defaultdict(lambda: [])
-        for lbl, child_group in cluster.items():
-            n = 0
-            while True:
-                matching_group, matching_lbl, child_group = split_2_4(child_group, sec_graph)
-                split_groups[f"{lbl}{matching_lbl}{n}"] = matching_group
-                n += 1
-                if len(child_group) == 0:
-                    break
-        if len(split_groups) > len(cluster):
-            print("a split occured 2.4")
+
+    # 2.1 Nodes in a group must have the same label
+    # When building the set of children groups we developed this already, so no changes need made
+
+    # print("after 2.1", clusters)
+
+    # 2.2 Nodes in a group must have the same degree
+    # for parents, cluster in clusters.items():
+    #     # print("hello", parents, cluster)
+    #     split_groups = defaultdict(lambda: [])
+    #     for lbl, child_group in cluster.items():
+    #         for sec in child_group:
+    #             deg = nx.degree(sec_graph, sec)
+    #             split_groups[f"{sec.label}{deg}"].append(sec)
+    #     # at this point, the child groups may have been split
+    #     # if they have, we need to check if that's going to trigger a split in the parents. 
+    #     # if it does we'll return a result indicating that to the caller?
+    #     if len(split_groups) > len(cluster):
+    #         print("a split occurred 2.2")
+    #         # TODO actually do something here
+    #     clusters[parents] = split_groups
+
+    # # print("after 2.2", clusters)
+
+    # # 2.3 Nodes in a group must have the same number of neighbours with each label
+    # for parents, cluster in clusters.items():
+    #     split_groups = defaultdict(lambda: [])
+    #     for lbl, child_group in cluster.items():
+    #         while True:
+    #             lbl_matching_group, lbl_matching_counts, child_group = split_2_3(child_group, sec_graph)
+    #             group_lbl = f"{lbl} -> " + ",".join(f"{k}:{v}" for k, v in sorted(lbl_matching_counts.items()))
+    #             split_groups[group_lbl] = lbl_matching_group
+    #             if len(child_group) == 0:
+    #                 break
+    #     if len(split_groups) > len(cluster):
+    #         # print("a split occured 2.3")
             
-            # start by getting all the parents in the higher_lvl_sec for each group.
-            group_parent_sets = []
-            for _, group in split_groups.items():
-                group_all_higher_lvl_parents = set()
-                for sec in group:
-                    higher_lvl_parents = set(high_lvl_sec_mapping[p] for p in sec_graph[sec] if p in seen)
-                    group_all_higher_lvl_parents = group_all_higher_lvl_parents.union(higher_lvl_parents)
-                group_parent_sets.append(group_all_higher_lvl_parents)
+    #         to_split = defaultdict(lambda: [])
+
+    #         for _, group in split_groups.items():
+    #             for sec in group:
+    #                 # to_split[high_lvl_parent].append(high_lvl_parent.members)
+    #                 for high_lvl_parent in parents:
+    #                     split_out = set(mem for mem in high_lvl_parent.members if not sec_graph.has_edge(sec, mem))
+    #                     to_split[high_lvl_parent].append(split_out)
+
+    #         # this will be the thing we return to the higher level, which it can use to figure out how to proceed
+    #         new_higher_lvl_secs = []
+    #         for high_lvl_sec, split_outs in to_split.items():
+    #             cp = high_lvl_sec.members.copy()
+    #             while len(cp) > 0:
+    #                 focus = cp[0]
+    #                 contains = (g for g in split_outs if focus in g)
+    #                 i = set(cp)
+    #                 i = i.intersection(*contains) # we get the items which always appear with focus
+    #                 i.add(focus) # in case none of split_outs thought they should include `m`. Not sure if this is actually possible.
+    #                 no_contains = (g for g in split_outs if focus not in g)
+    #                 i = i.difference(*no_contains) # remove any of the items which *also* appear not beside focus
+
+    #                 # at this point, we can update split_outs to remove any nodes in `i` from it
+    #                 for split_out in split_outs:
+    #                     split_out.difference_update(i)
+
+    #                 # we can also update the members list so that these items won't be considered any further. They've been added to an SEC
+    #                 cp = [m for m in cp if m not in i]
+
+    #                 # finally construct a new SEC with the split out items.
+    #                 assert(len(i) > 0)
+    #                 new_higher_lvl_secs.append(SEC(list(i), high_lvl_sec.label))
+                    
+
+    #         if len(new_higher_lvl_secs) > len(clusters):
+    #             return new_higher_lvl_secs, None
+
+
+    #         ### -----
+
+
+    #         # start by getting all the parents in the higher_lvl_sec for each group.
+    #         # group_parent_sets = []
+    #         # for _, group in split_groups.items():
+    #         #     group_all_higher_lvl_parents = set()
+    #         #     for sec in group:
+    #         #         higher_lvl_parents = set(high_lvl_sec_mapping[p] for p in sec_graph[sec] if p in seen)
+    #         #         group_all_higher_lvl_parents = group_all_higher_lvl_parents.union(higher_lvl_parents)
+    #         #     group_parent_sets.append(group_all_higher_lvl_parents)
+
+    #         # # once we have that we want to find all common parents from each group.
+    #         # # we keep looping until we've got it fully split out
+    #         # idx = 0
+    #         # while idx < len(group_parent_sets):
+    #         #     s = group_parent_sets[idx]
+    #         #     for parent_set in group_parent_sets[idx+1:]:
+    #         #         s = s.intersection(parent_set)
+    #         #     if len(s) == 0:
+    #         #         idx += 1
+    #         #         continue
+    #         #     group_parent_sets.append(group_parent_sets[idx].copy())
+    #         #     group_parent_sets[idx] = s
+    #         #     for parent_set in group_parent_sets[idx+1:]:
+    #         #         parent_set.difference_update(s)
+    #         #     idx += 1
+
+    #         # print(group_parent_sets)
+    #         # print(higher_level_secs)
+    #         # if len(group_parent_sets) > len(higher_level_secs):
+    #         #     print("i think it broken yeh")
+    #         #     for sec in higher_level_secs:
+    #         #         print("broke parent", sec.label)
+    #     clusters[parents] = split_groups
+
+    # # print("after 2.3", clusters)
+
+    # # 2.4 If any nodes in a group are connected to each other, all nodes must be connected to each other.
+    # for parents, cluster in clusters.items():
+    #     # print("hello", parents, cluster)
+    #     split_groups = defaultdict(lambda: [])
+    #     for lbl, child_group in cluster.items():
+    #         n = 0
+    #         while True:
+    #             matching_group, matching_lbl, child_group = split_2_4(child_group, sec_graph)
+    #             split_groups[f"{lbl}{matching_lbl}{n}"] = matching_group
+    #             n += 1
+    #             if len(child_group) == 0:
+    #                 break
+    #     if len(split_groups) > len(cluster):
+    #         print("a split occured 2.4")
             
-            # once we have that we want to find all common parents from each group.
-            # we keep looping until we've got it fully split out
-            new_parent_high_lvl_secs = []
-            idx = 0
-            while idx < len(group_parent_sets):
-                s = group_parent_sets[idx]
-                for parent_set in group_parent_sets[idx+1:]:
-                    s = s.intersection(parent_set)
-                if len(s) == 0:
-                    idx += 1
-                    continue
-                group_parent_sets.append(group_parent_sets[idx].copy())
-                group_parent_sets[idx] = s
-                for parent_set in group_parent_sets[idx+1:]:
-                    parent_set.difference_update(s)
-                idx += 1
+    #         # start by getting all the parents in the higher_lvl_sec for each group.
+    #         group_parent_sets = []
+    #         for _, group in split_groups.items():
+    #             group_all_higher_lvl_parents = set()
+    #             for sec in group:
+    #                 higher_lvl_parents = set(high_lvl_sec_mapping[p] for p in sec_graph[sec] if p in seen)
+    #                 group_all_higher_lvl_parents = group_all_higher_lvl_parents.union(higher_lvl_parents)
+    #             group_parent_sets.append(group_all_higher_lvl_parents)
+            
+    #         # once we have that we want to find all common parents from each group.
+    #         # we keep looping until we've got it fully split out
+    #         new_parent_high_lvl_secs = []
+    #         idx = 0
+    #         while idx < len(group_parent_sets):
+    #             s = group_parent_sets[idx]
+    #             for parent_set in group_parent_sets[idx+1:]:
+    #                 s = s.intersection(parent_set)
+    #             if len(s) == 0:
+    #                 idx += 1
+    #                 continue
+    #             group_parent_sets.append(group_parent_sets[idx].copy())
+    #             group_parent_sets[idx] = s
+    #             for parent_set in group_parent_sets[idx+1:]:
+    #                 parent_set.difference_update(s)
+    #             idx += 1
 
-            if len(new_parent_high_lvl_secs) > len(higher_level_secs):
-                print("i think it broken yeh")
+    #         if len(new_parent_high_lvl_secs) > len(higher_level_secs):
+    #             print("i think it broken yeh")
 
-            # at this point we know that a group got split, since there's more than there was previously
-            # so, what we'll do is loop over the new groups
-            # for each of these groups, we check that it is still connected to *all* parents
-            # if there is any of the parents to which it is not connected, then a breaking split has occured and it will need propagated
-            # todo this is actually all wrong, since the sec_graph input is already known to be correct. instead we want to check if there was a split in the higher_level_secs or something
-            # for _, group in split_groups.items():
-            #     for sec in group:
-            #         for parent in parents:
-            #             # print("checking edge", sec, parent)
-            #             if not sec_graph.has_edge(sec, parent):
-            #                 print("BREAKING SPLIT OCCURRED THIS IS NOT A DRILL")
-            # print("after the breaking split check...")
-        clusters[parents] = split_groups
+    #         # at this point we know that a group got split, since there's more than there was previously
+    #         # so, what we'll do is loop over the new groups
+    #         # for each of these groups, we check that it is still connected to *all* parents
+    #         # if there is any of the parents to which it is not connected, then a breaking split has occured and it will need propagated
+    #         # todo this is actually all wrong, since the sec_graph input is already known to be correct. instead we want to check if there was a split in the higher_level_secs or something
+    #         # for _, group in split_groups.items():
+    #         #     for sec in group:
+    #         #         for parent in parents:
+    #         #             # print("checking edge", sec, parent)
+    #         #             if not sec_graph.has_edge(sec, parent):
+    #         #                 print("BREAKING SPLIT OCCURRED THIS IS NOT A DRILL")
+    #         # print("after the breaking split check...")
+    #     clusters[parents] = split_groups
 
     # print("after 2.4", clusters)
 

@@ -284,3 +284,9 @@ needed, hence the graph was being messed up. So instead, I made a quick copy
 of the members array, and worked with that during the split checks.
 
 IT WORKS!!! IT WORKS!!! ABSOLUTELY BUZZING :) :) :) :) :D :P
+
+--- next day ---
+
+Ok, at this point I suppose I should maybe tidy up the code a bit. There's 
+various ways it can be refactored to reduce duplication, and increase clarity,
+so let's do that.
