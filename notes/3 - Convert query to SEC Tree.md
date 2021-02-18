@@ -245,3 +245,26 @@ the clusters dictionary so that the key is properly unique.
 At this point I'm also pretty confident that our SECTree will actually be an
 SECDAG. Gonna need a better name for that I think.
 
+Ok, things seem to be going quite well anyways, so at this point I'm going to
+start working on the splitting code. We've made a quick change to check if a
+split is necessary but I'm not sure if it's working. To test that I'll create 
+QT24 which will hopefully exhibit splitting behaviour.
+
+--- next day? ---
+
+So yeah, QT24 indicates that our detection on when to split is way off. It 
+needs to be based on the higher_lvl_secs that get passed from the caller. If
+the groups at current level exceed what we'd expect it indicates that we 
+*might* need to jump back to a higher level and fix things. Just need to nail
+down the exact details of when we should / shouldn't backtrack. Basically we
+need to work out which of the high lvl secs are incorrect, if any.
+
+--- ... ---
+
+Ok, so I had worked through that example to understand when the splitting 
+needs to occur, and how. I've got a better idea of how to do it now, so let's
+write the code.
+
+Well, after a bunch of fiddling, it seems quite close but for some reason it's
+crashing after the alg completes, when it tries to render the graph...
+

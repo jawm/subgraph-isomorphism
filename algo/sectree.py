@@ -86,16 +86,13 @@ def combine_structures(seen, sec_graph, higher_level_secs):
 
     # print("after 0.0", higher_level_secs)
 
-    high_lvl_sec_mapping = defaultdict(lambda: set())
+    high_lvl_sec_mapping = {} # defaultdict(lambda: set())
 
     groups = []
     for high_lvl_sec in higher_level_secs:
         for sec in high_lvl_sec.members:
-            high_lvl_sec_mapping[sec].add(high_lvl_sec)
+            high_lvl_sec_mapping[sec] = high_lvl_sec
             groups.append(sec)
-
-    # the sets need to be frozensets so that they can be hashed yeh
-    high_lvl_sec_mapping = {k: frozenset(v) for k, v in high_lvl_sec_mapping.items()}
 
     # 1. combine all children from all groups
     
@@ -110,7 +107,7 @@ def combine_structures(seen, sec_graph, higher_level_secs):
             if possible_child in seen:
                 continue
 
-            parents = tuple(high_lvl_sec_mapping[p] for p in sec_graph[possible_child] if p in seen)
+            parents = frozenset(high_lvl_sec_mapping[p] for p in sec_graph[possible_child] if p in seen)
             # todo at this point we actually want to check if the `parents` group is compat with higher_lvl_sec??
 
             if possible_child not in clusters[parents][possible_child.label]:
@@ -121,7 +118,7 @@ def combine_structures(seen, sec_graph, higher_level_secs):
         g = nx.Graph()
         for high_lvl_sec in higher_level_secs:
             g.add_node(high_lvl_sec)
-        return -1, g
+        return higher_level_secs, g
 
     # print("after 1.1", clusters)
     
@@ -150,7 +147,7 @@ def combine_structures(seen, sec_graph, higher_level_secs):
 
     # 2.3 Nodes in a group must have the same number of neighbours with each label
     for parents, cluster in clusters.items():
-        # print("hello", parents, cluster)
+        print("hello", parents, cluster)
         split_groups = defaultdict(lambda: [])
         for lbl, child_group in cluster.items():
             while True:
@@ -161,7 +158,77 @@ def combine_structures(seen, sec_graph, higher_level_secs):
                     break
         if len(split_groups) > len(cluster):
             print("a split occured 2.3")
-            # TODO actually do something here
+            
+            to_split = defaultdict(lambda: [])
+
+            for _, group in split_groups.items():
+                for sec in group:
+                    # to_split[high_lvl_parent].append(high_lvl_parent.members)
+                    for high_lvl_parent in parents:
+                        split_out = set(mem for mem in high_lvl_parent.members if not sec_graph.has_edge(sec, mem))
+                        to_split[high_lvl_parent].append(split_out)
+
+            # this will be the thing we return to the higher level, which it can use to figure out how to proceed
+            new_higher_lvl_secs = []
+            for high_lvl_sec, split_outs in to_split.items():
+                while len(high_lvl_sec.members) > 0:
+                    focus = high_lvl_sec.members[0]
+                    contains = (g for g in split_outs if focus in g)
+                    i = set(high_lvl_sec.members)
+                    i = i.intersection(*contains) # we get the items which always appear with focus
+                    i.add(focus) # in case none of split_outs thought they should include `m`. Not sure if this is actually possible.
+                    no_contains = (g for g in split_outs if focus not in g)
+                    i = i.difference(*no_contains) # remove any of the items which *also* appear not beside focus
+
+                    # at this point, we can update split_outs to remove any nodes in `i` from it
+                    for split_out in split_outs:
+                        split_out.difference_update(i)
+
+                    # we can also update the members list so that these items won't be considered any further. They've been added to an SEC
+                    high_lvl_sec.members = [m for m in high_lvl_sec.members if m not in i]
+
+                    # finally construct a new SEC with the split out items.
+                    new_higher_lvl_secs.append(SEC(list(i), high_lvl_sec.label))
+                    
+
+            if len(new_higher_lvl_secs) > len(clusters):
+                return new_higher_lvl_secs, None
+
+
+            ### -----
+
+
+            # start by getting all the parents in the higher_lvl_sec for each group.
+            # group_parent_sets = []
+            # for _, group in split_groups.items():
+            #     group_all_higher_lvl_parents = set()
+            #     for sec in group:
+            #         higher_lvl_parents = set(high_lvl_sec_mapping[p] for p in sec_graph[sec] if p in seen)
+            #         group_all_higher_lvl_parents = group_all_higher_lvl_parents.union(higher_lvl_parents)
+            #     group_parent_sets.append(group_all_higher_lvl_parents)
+
+            # # once we have that we want to find all common parents from each group.
+            # # we keep looping until we've got it fully split out
+            # idx = 0
+            # while idx < len(group_parent_sets):
+            #     s = group_parent_sets[idx]
+            #     for parent_set in group_parent_sets[idx+1:]:
+            #         s = s.intersection(parent_set)
+            #     if len(s) == 0:
+            #         idx += 1
+            #         continue
+            #     group_parent_sets.append(group_parent_sets[idx].copy())
+            #     group_parent_sets[idx] = s
+            #     for parent_set in group_parent_sets[idx+1:]:
+            #         parent_set.difference_update(s)
+            #     idx += 1
+
+            # print(group_parent_sets)
+            # print(higher_level_secs)
+            # if len(group_parent_sets) > len(higher_level_secs):
+            #     print("i think it broken yeh")
+            #     for sec in higher_level_secs:
+            #         print("broke parent", sec.label)
         clusters[parents] = split_groups
 
     # print("after 2.3", clusters)
@@ -231,6 +298,7 @@ def combine_structures(seen, sec_graph, higher_level_secs):
     # 4. else call combine structures one level lower
     next_seen = seen.copy()
     new_secs = []
+    parent_lookup = {}
     for parents, cluster in clusters.items():
         groups_as_secs = []
         for lbl, group in cluster.items():
@@ -238,26 +306,66 @@ def combine_structures(seen, sec_graph, higher_level_secs):
             new_secs.append(s)
             groups_as_secs.append(s)
             for sec in group:
+                parent_lookup[sec] = parents
                 next_seen[sec] = True
         clusters[parents] = groups_as_secs
                 
 
     need_split, new_graph = combine_structures(next_seen, sec_graph, new_secs)
+    while len(need_split) > len(new_secs):
+        print("DEALING WITH A SPLIT THAT GOT PASSED UP")
+        new_secs = need_split
+        to_split = defaultdict(lambda: [])
+        for group in need_split:
+            group = group.members
+            for sec in group:
+                # to_split[high_lvl_parent].append(high_lvl_parent.members)
+                parents = parent_lookup[sec]
+                for high_lvl_parent in parents:
+                    split_out = set(mem for mem in high_lvl_parent.members if not sec_graph.has_edge(sec, mem))
+                    to_split[high_lvl_parent].append(split_out)
 
-    if need_split > 0:
-        # TODO actually implement the splitting here yeah?
-        print("A SPLIT IS NEEDED YOU'd BETTER DEAL WITH IT BROOO")
-        pass
-    
+        # this will be the thing we return to the higher level, which it can use to figure out how to proceed
+        new_higher_lvl_secs = []
+        for high_lvl_sec, split_outs in to_split.items():
+            while len(high_lvl_sec.members) > 0:
+                focus = high_lvl_sec.members[0]
+                contains = (g for g in split_outs if focus in g)
+                i = set(high_lvl_sec.members)
+                i = i.intersection(*contains) # we get the items which always appear with focus
+                i.add(focus) # in case none of split_outs thought they should include `m`. Not sure if this is actually possible.
+                no_contains = (g for g in split_outs if focus not in g)
+                i = i.difference(*no_contains) # remove any of the items which *also* appear not beside focus
+
+                # at this point, we can update split_outs to remove any nodes in `i` from it
+                for split_out in split_outs:
+                    split_out.difference_update(i)
+
+                # we can also update the members list so that these items won't be considered any further. They've been added to an SEC
+                high_lvl_sec.members = [m for m in high_lvl_sec.members if m not in i]
+
+                # finally construct a new SEC with the split out items.
+                new_higher_lvl_secs.append(SEC(list(i), high_lvl_sec.label))
+
+        if len(new_higher_lvl_secs) > len(higher_level_secs):
+            print("going one way")
+            return new_higher_lvl_secs, None
+        else:
+            print("going another")
+            need_split, new_graph = combine_structures(next_seen, sec_graph, new_secs)
+
+    assert(len(need_split) == len(new_secs))
+    print("all good", len(new_secs))
+
     # 5. Add groups and edges to the graph
     for high_lvl_sec in higher_level_secs:
         for sec in high_lvl_sec.members:
-            for new_sec in new_secs:
+            for new_sec in need_split:
                 for s in new_sec.members:
                     if sec_graph.has_edge(sec, s):
                         new_graph.add_edge(high_lvl_sec, new_sec)
 
-    return -1, new_graph
+    return higher_level_secs, new_graph
 
 def split_2_3(child_group, sec_graph):
     neighbours = sec_graph[child_group[0]]
