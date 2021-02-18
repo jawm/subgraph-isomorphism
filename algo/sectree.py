@@ -147,7 +147,6 @@ def combine_structures(seen, sec_graph, higher_level_secs):
 
     # 2.3 Nodes in a group must have the same number of neighbours with each label
     for parents, cluster in clusters.items():
-        print("hello", parents, cluster)
         split_groups = defaultdict(lambda: [])
         for lbl, child_group in cluster.items():
             while True:
@@ -157,10 +156,7 @@ def combine_structures(seen, sec_graph, higher_level_secs):
                 if len(child_group) == 0:
                     break
         if len(split_groups) > len(cluster):
-            print("a split occured 2.3")
-
-            for group in split_groups:
-                print(group)
+            # print("a split occured 2.3")
             
             to_split = defaultdict(lambda: [])
 
@@ -319,7 +315,6 @@ def combine_structures(seen, sec_graph, higher_level_secs):
 
     need_split, new_graph = combine_structures(next_seen, sec_graph, new_secs)
     while len(need_split) > len(new_secs):
-        print("DEALING WITH A SPLIT THAT GOT PASSED UP")
         new_secs = need_split
         to_split = defaultdict(lambda: [])
         for group in need_split:
@@ -356,10 +351,8 @@ def combine_structures(seen, sec_graph, higher_level_secs):
                 new_higher_lvl_secs.append(SEC(list(i), high_lvl_sec.label))
 
         if len(new_higher_lvl_secs) > len(higher_level_secs):
-            print("going one way")
             return new_higher_lvl_secs, None
         else:
-            print("going another")
             need_split, new_graph = combine_structures(next_seen, sec_graph, new_secs)
 
     # 5. Add groups and edges to the graph

@@ -277,3 +277,10 @@ don't really see how adding the backtracking in could have broken it...
 I've added some assertions when constructing SEC objects, and there's 
 definitely always members at construction, so I must have inadvertently 
 modified the object.
+
+IT WORKS!!! I was modifying the members array when doing my split checks, but 
+I forgot that this would persist even in circumstances when a split *isn't*
+needed, hence the graph was being messed up. So instead, I made a quick copy 
+of the members array, and worked with that during the split checks.
+
+IT WORKS!!! IT WORKS!!! ABSOLUTELY BUZZING :) :) :) :) :D :P
