@@ -158,6 +158,9 @@ def combine_structures(seen, sec_graph, higher_level_secs):
                     break
         if len(split_groups) > len(cluster):
             print("a split occured 2.3")
+
+            for group in split_groups:
+                print(group)
             
             to_split = defaultdict(lambda: [])
 
@@ -188,6 +191,7 @@ def combine_structures(seen, sec_graph, higher_level_secs):
                     high_lvl_sec.members = [m for m in high_lvl_sec.members if m not in i]
 
                     # finally construct a new SEC with the split out items.
+                    assert(len(i) > 0)
                     new_higher_lvl_secs.append(SEC(list(i), high_lvl_sec.label))
                     
 
@@ -302,6 +306,7 @@ def combine_structures(seen, sec_graph, higher_level_secs):
     for parents, cluster in clusters.items():
         groups_as_secs = []
         for lbl, group in cluster.items():
+            assert(len(group) > 0)
             s = SEC(group, group[0].label)
             new_secs.append(s)
             groups_as_secs.append(s)
@@ -345,6 +350,7 @@ def combine_structures(seen, sec_graph, higher_level_secs):
                 high_lvl_sec.members = [m for m in high_lvl_sec.members if m not in i]
 
                 # finally construct a new SEC with the split out items.
+                assert(len(i) > 0)
                 new_higher_lvl_secs.append(SEC(list(i), high_lvl_sec.label))
 
         if len(new_higher_lvl_secs) > len(higher_level_secs):
@@ -359,12 +365,14 @@ def combine_structures(seen, sec_graph, higher_level_secs):
 
     # 5. Add groups and edges to the graph
     for high_lvl_sec in higher_level_secs:
-        new_graph.add_node(high_lvl_sec) # todo we shouldn't have to do this... there should always be edges between things..
+        # new_graph.add_node(high_lvl_sec) # todo we shouldn't have to do this... there should always be edges between things..
+        print(high_lvl_sec.label, [m.label for m in high_lvl_sec.members])
+        assert(len(high_lvl_sec.members) > 0)
         for sec in high_lvl_sec.members:
             for new_sec in need_split:
+                assert(len(new_sec.members) > 0)
                 for s in new_sec.members:
                     if sec_graph.has_edge(sec, s):
-                        print("ADDING EDGE TO GRAPH!?")
                         new_graph.add_edge(high_lvl_sec, new_sec)
 
     return higher_level_secs, new_graph
@@ -444,9 +452,9 @@ def _visualise_SEC_graph_rec(seen, sec_graph, nodes):
     nodes2 = []
     for nd in nodes:
         res = f"{res}\n{nd.global_id} [label=\"{nd.label}\"]"
-        print(nd, nd.label, nd.members)
-        for x in sec_graph.nodes:
-            print("in graph", x.label, x.members, x)
+        # print(nd, nd.label, nd.members)
+        # for x in sec_graph.nodes:
+        #     print("in graph", x.label, x.members, x)
         for nd2 in sec_graph[nd]:
             if nd2 in seen:
                 continue

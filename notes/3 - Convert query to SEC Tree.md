@@ -268,3 +268,12 @@ write the code.
 Well, after a bunch of fiddling, it seems quite close but for some reason it's
 crashing after the alg completes, when it tries to render the graph...
 
+Ok so... it seems like somehow the higher_lvl_secs is ending up having entries
+without any members. That's obviously invalid though. Interestingly it seems 
+to be happening for the 'a' node too, which is at the top. I've got no clue 
+why that would happen though, the backtracking should never get that far, so I
+don't really see how adding the backtracking in could have broken it...
+
+I've added some assertions when constructing SEC objects, and there's 
+definitely always members at construction, so I must have inadvertently 
+modified the object.
