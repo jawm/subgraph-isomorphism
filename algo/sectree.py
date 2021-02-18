@@ -359,10 +359,12 @@ def combine_structures(seen, sec_graph, higher_level_secs):
 
     # 5. Add groups and edges to the graph
     for high_lvl_sec in higher_level_secs:
+        new_graph.add_node(high_lvl_sec) # todo we shouldn't have to do this... there should always be edges between things..
         for sec in high_lvl_sec.members:
             for new_sec in need_split:
                 for s in new_sec.members:
                     if sec_graph.has_edge(sec, s):
+                        print("ADDING EDGE TO GRAPH!?")
                         new_graph.add_edge(high_lvl_sec, new_sec)
 
     return higher_level_secs, new_graph
@@ -442,6 +444,9 @@ def _visualise_SEC_graph_rec(seen, sec_graph, nodes):
     nodes2 = []
     for nd in nodes:
         res = f"{res}\n{nd.global_id} [label=\"{nd.label}\"]"
+        print(nd, nd.label, nd.members)
+        for x in sec_graph.nodes:
+            print("in graph", x.label, x.members, x)
         for nd2 in sec_graph[nd]:
             if nd2 in seen:
                 continue
