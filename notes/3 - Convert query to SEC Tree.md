@@ -290,3 +290,38 @@ IT WORKS!!! IT WORKS!!! ABSOLUTELY BUZZING :) :) :) :) :D :P
 Ok, at this point I suppose I should maybe tidy up the code a bit. There's 
 various ways it can be refactored to reduce duplication, and increase clarity,
 so let's do that.
+
+Well, I've rearranged it a bit, and it could probably be improved further, but
+to be honest, I kind of want to keep progressing. I think I'll work on making 
+the visualisation of the final DAG more rich. Need to include the number of 
+replications, and include data about the original node ids.
+
+Ok, I've worked on the visualisation somewhat, and it's certainly a lot 
+better. That being said, I'm noticing that we might be losing some important
+context with our current datastructures. In the visualisation of QT18, we can
+see that the replication boxes for 'b' and 'c' are separate, which one might 
+take to mean that these can be permuted independently without creating invalid
+matchings. However that is not the case. The 'c' nodes in the original query
+graph must descend from particular 'b' nodes at the parent level. I'll need to
+investigate tomorrow to see if this is simply poor visualisation on my part,
+or if the actual results of the conversion need modified.
+
+It's also worth noting that, when we look at the step by step output during
+conversion, it seems like this information is at least available, so we should
+be ok, even if it does come down to modifying the conversion algorithm.
+
+We can see the same problem with QT23, but QT24 looks perfect.
+
+Another thing I need to look at is making the labelling of the clusters have a
+correct label indicating whether the nodes are connected. Currently this is 
+hard coded, so obviously wrong. Actually, this makes me think, if you have 
+several generations of node groups in the same replication cluster, is it 
+possible for one of those groups to be replicated but the others not? If so, 
+we'll need to think of a better way to indicate that a node group is 
+connected. Perhaps that information should actually be in the label of the 
+node that gets rendered? But actually that would get confusing, since the 
+replication won't necessarily only happen at the lowest level. Perhaps I 
+should think more about what sort of graphs would exhibit connectedness at
+higher levels of the conversion proces...
+
+Anyways, that's enough for one night.
