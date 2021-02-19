@@ -153,6 +153,8 @@ def combine_structures(seen, sec_graph, higher_level_secs):
                 n += 1
                 if len(child_group) == 0:
                     break
+        if len(split_groups) > len(cluster1):
+            raise Exception("CONNECTEDNESS COUNTS")
         
         # Now that the rules have been applied, we can look for any breaking splits that occurred.
         if len(split_groups) > len(cluster):
