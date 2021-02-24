@@ -390,28 +390,20 @@ def simplify_sec(sec):
 
 def visualise_SEC_graph(sec_graph, start):
     sec_graph, start = simplify(sec_graph, start)
-    return f"""digraph G {{
+    return f"""graph G {{
 rankdir=LR
-{_visualise_SEC_graph_rec({start: True}, sec_graph, [start])}
+{_visualise_SEC_graph_nodes(sec_graph, start)}
 {_visualise_SEC_graph_replications(0, sec_graph, sec_graph.nodes, 1)}
 }}"""
 
-def _visualise_SEC_graph_rec(seen, sec_graph, nodes):
-    res = ""
-    next_seen = seen.copy()
-    nodes2 = []
-    for nd in nodes:
-        res = f"{res}\n{nd.global_id} [label=\"{nd.label}\nconnected: {nd.is_connected}\"]"
-        for nd2 in sec_graph[nd]:
-            if nd2 in seen:
-                continue
-            res = f"{res}\n{nd.global_id}->{nd2.global_id};"
-            next_seen[nd2] = True
-            if nd2 in nodes2:
-                continue
-            nodes2.append(nd2)
-    if len(nodes2) > 0:
-        res = f"{res}\n{_visualise_SEC_graph_rec(next_seen, sec_graph, nodes2)}"
+def _visualise_SEC_graph_nodes(sec_graph, start):
+    res = f"{start.global_id} [label=\"{start.label}\nconnected: {start.is_connected}\"]"
+    for (nd, succ) in nx.bfs_successors(sec_graph, start):
+        for n in succ:
+            res = f"{res}\n{n.global_id} [label=\"{n.label}\nconnected: {n.is_connected}\"]"
+
+    for (nd, nd2) in sec_graph.edges:
+        res = f"{res}\n{nd.global_id}--{nd2.global_id};"
 
     return res
 

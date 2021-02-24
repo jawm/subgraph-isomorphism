@@ -426,4 +426,11 @@ graph at all. The idea is that we're doing a BFS starting from a given node,
 and so we don't really care about the direction of edges. So yeah, when we add
 edges between sibling SECs, that's all they are. Edges.
 
-
+Ok, well I've implemented a rule that forces all members of a group to have 
+the same `is_connected` attribute, which helps improve some things. I also had
+a go at improving the visualisation a bit. All the edges are undirected now, 
+and it should show connections between siblings, where they exist. I also 
+tried to make it so that nodes which are at the same depth in the BFS are at
+the same rank, but it seems like this might not be super easy with graphviz, 
+at least not without modifying it heavily. That's ok though, since it is at 
+least visualising things correctly with the correct clustering as-is.
