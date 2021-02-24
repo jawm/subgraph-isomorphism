@@ -471,3 +471,11 @@ That's all I'm gonna do tonight. Some things I should maybe think about:
    too, although that will require me to nail down exactly the object 
    representation that we want for the final SEC graph.
 
+--- next day ---
+
+Ok, I suppose I'll make a few more test queries now.
+
+I've drafted QT27, which is basically a single layer of 5 children beneath the
+start node, connected as a path, and they all descend from the start node. 
+This graph is definitely producing an incorrect result that needs 
+investigated.
