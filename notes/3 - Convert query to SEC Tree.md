@@ -401,3 +401,29 @@ need to make it so the visualisations will be able to represent these extra
 edges somehow. I think we'll try to make them visually distinct, since they
 carry a somewhat different meaning from the edges between levels in the graph.
 
+Ok, so I've updated things. Now every SEC has a field `is_connected` which 
+indicates if its members form a clique. I've updated the visualisation to also
+reflect this, by adding the connectedness to the label, however this clearly
+isn't correct. It should really be an attribute for each subgraph. The problem
+is that graphviz creates quite a big distinction between subgraphs and nodes. 
+In my usecase it would be very useful to be able to have nodes that contain 
+other nodes, but we can't, so I'm having to pretend that subgraphs are nodes.
+That seems to be breaking down quite quickly however, and it's a bit visually
+confusing anyways. I'm not really sure what I can do about it though...
+
+I might want to investigate other forms of visualisation, but graphviz is 
+actually really good and easy to use. I don't want to have to use anything
+that would require me to do my own layout.
+
+--- several days later ---
+
+Well, after a hectic few days with work, we are back.
+
+Um, glancing over the previous work I was considering, I mentioned that the 
+edges between higher level connected SECs should be bidirectional. However, as
+I think about it, we probably don't actually need any directedness in our 
+graph at all. The idea is that we're doing a BFS starting from a given node, 
+and so we don't really care about the direction of edges. So yeah, when we add
+edges between sibling SECs, that's all they are. Edges.
+
+

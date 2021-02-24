@@ -37,13 +37,14 @@ Below is code relating to my new idea seen in notes 3
 global_id_counter = 0
 class SEC:
     # members is a set of either SEC or graph nodes
-    def __init__(self, members, label):
+    def __init__(self, members, label, is_connected):
         #sue me
         global global_id_counter
         self.global_id = global_id_counter
         global_id_counter += 1
         self.members = members
         self.label = label
+        self.is_connected = is_connected
         self.children = []
 
     def add_child(self, sec):
@@ -63,7 +64,7 @@ def _build_initial_sec_graph(graph, start_node):
     sec_graph = nx.Graph()
     mapping = {}
     for nd in graph.nodes:
-        mapping[nd] = SEC([nd], graph.nodes[nd]["lbl"])
+        mapping[nd] = SEC([nd], graph.nodes[nd]["lbl"], False)
         sec_graph.add_node(mapping[nd])
 
     for edge in graph.edges:
@@ -124,9 +125,16 @@ def combine_structures(seen, sec_graph, higher_level_secs):
     
     # 2. Split up groups such that they satisfy our clustering rules.
     for parents, cluster in clusters.items():
-        # 2.2 Nodes in a group must have the same degree
+        # 2.1 Nodes in a group must all have the same number of members in the underlying graph
         split_groups = defaultdict(lambda: [])
         for lbl, child_group in cluster.items():
+            for sec in child_group:
+                split_groups[f"{lbl}{len(sec.members)}"].append(sec)
+        cluster1 = split_groups
+
+        # 2.2 Nodes in a group must have the same degree
+        split_groups = defaultdict(lambda: [])
+        for lbl, child_group in cluster1.items():
             for sec in child_group:
                 deg = nx.degree(sec_graph, sec)
                 split_groups[f"{lbl}{deg}"].append(sec)
@@ -143,24 +151,38 @@ def combine_structures(seen, sec_graph, higher_level_secs):
                     break
         cluster1 = split_groups
 
-        # 2.4 If any nodes in a group are connected to each other, all nodes must be connected to each other.
+        # 2.4 If any nodes in the underlying graph were cliques, so must all nodes in this group
         split_groups = defaultdict(lambda: [])
         for lbl, child_group in cluster1.items():
             n = 0
             while True:
-                matching_group, matching_lbl, child_group = split_2_4(child_group, sec_graph)
-                split_groups[f"{lbl}{matching_lbl}{n}"] = matching_group
+                matching_group, is_connected, child_group = split_2_4(child_group, sec_graph)
+                l = "subc" if is_connected else "subu"
+                split_groups[f"{lbl}{l}{n}"] = matching_group
                 n += 1
                 if len(child_group) == 0:
                     break
-        if len(split_groups) > len(cluster1):
-            raise Exception("CONNECTEDNESS COUNTS")
+        cluster1 = split_groups
+
+        # 2.5 If any nodes in a group are connected to each other, all nodes must be connected to each other.
+        split_groups = defaultdict(lambda: [])
+        for lbl, child_group in cluster1.items():
+            n = 0
+            while True:
+                matching_group, is_connected, child_group = split_2_5(child_group, sec_graph)
+                l = "c" if is_connected else "u"
+                split_groups[f"{lbl}{l}{n}"] = (matching_group, is_connected)
+                n += 1
+                if len(child_group) == 0:
+                    break
+        
+        
         
         # Now that the rules have been applied, we can look for any breaking splits that occurred.
         if len(split_groups) > len(cluster):
             to_split = defaultdict(lambda: [])
 
-            for _, group in split_groups.items():
+            for _, (group, is_connected) in split_groups.items():
                 for sec in group:
                     # to_split[high_lvl_parent].append(high_lvl_parent.members)
                     for high_lvl_parent in parents:
@@ -189,7 +211,7 @@ def combine_structures(seen, sec_graph, higher_level_secs):
 
                     # finally construct a new SEC with the split out items.
                     assert(len(i) > 0)
-                    new_higher_lvl_secs.append(SEC(list(i), high_lvl_sec.label))
+                    new_higher_lvl_secs.append(SEC(list(i), high_lvl_sec.label, high_lvl_sec.is_connected))
                     
 
             if len(new_higher_lvl_secs) > len(clusters):
@@ -203,9 +225,9 @@ def combine_structures(seen, sec_graph, higher_level_secs):
     parent_lookup = {}
     for parents, cluster in clusters.items():
         groups_as_secs = []
-        for lbl, group in cluster.items():
+        for lbl, (group, is_connected) in cluster.items():
             assert(len(group) > 0)
-            s = SEC(group, group[0].label)
+            s = SEC(group, group[0].label, is_connected)
             new_secs.append(s)
             groups_as_secs.append(s)
             for sec in group:
@@ -249,7 +271,7 @@ def combine_structures(seen, sec_graph, higher_level_secs):
 
                 # finally construct a new SEC with the split out items.
                 assert(len(i) > 0)
-                new_higher_lvl_secs.append(SEC(list(i), high_lvl_sec.label))
+                new_higher_lvl_secs.append(SEC(list(i), high_lvl_sec.label, high_lvl_sec.is_connected))
 
         if len(new_higher_lvl_secs) > len(higher_level_secs):
             return new_higher_lvl_secs, None
@@ -296,6 +318,18 @@ def split_2_3_breaker(counts, sec_graph, sec):
 
 def split_2_4(child_group, sec_graph):
     guide = child_group[0]
+    split_out = []
+    group = [guide]
+    for sec in child_group[1:]:
+        if sec.is_connected == guide.is_connected:
+            group.append(sec)
+        else:
+            split_out.append(sec)
+
+    return group, guide.is_connected, split_out
+
+def split_2_5(child_group, sec_graph):
+    guide = child_group[0]
 
     is_connected = False
     for sec in child_group[1:]:
@@ -311,7 +345,7 @@ def split_2_4(child_group, sec_graph):
         else:
             group.append(sec)
 
-    return group, "c" if is_connected else "u", split_out
+    return group, is_connected, split_out
 
 def get_SEC(graph, start_node):
     sec_graph, start = _build_initial_sec_graph(graph, start_node)
@@ -320,7 +354,7 @@ def get_SEC(graph, start_node):
     print()
     print(visualise_SEC_graph(sec_graph, start))
     while True:
-        s = SEC([start], start.label)
+        s = SEC([start], start.label, False)
         _, new_sec_graph = combine_structures({start: True}, sec_graph, [s])
         if len(new_sec_graph) == len(sec_graph):
             break
@@ -350,7 +384,7 @@ def simplify_sec(sec):
     v = [simplify_sec(s) for s in sec.members]
     for x in v:
         x.global_id = sec.global_id
-    s = SEC(v, sec.label)
+    s = SEC(v, sec.label, sec.is_connected)
     s.global_id = sec.global_id
     return s
 
@@ -367,7 +401,7 @@ def _visualise_SEC_graph_rec(seen, sec_graph, nodes):
     next_seen = seen.copy()
     nodes2 = []
     for nd in nodes:
-        res = f"{res}\n{nd.global_id} [label=\"{nd.label}\"]"
+        res = f"{res}\n{nd.global_id} [label=\"{nd.label}\nconnected: {nd.is_connected}\"]"
         for nd2 in sec_graph[nd]:
             if nd2 in seen:
                 continue
@@ -383,7 +417,7 @@ def _visualise_SEC_graph_rec(seen, sec_graph, nodes):
 
 def _visualise_SEC_graph_replications(cluster_id, sec_graph, nodes, replications):
     res = f"""subgraph cluster_{cluster_id} {{
-label= "replications: {replications}; connected: false"
+label= "replications: {replications}"
 """
     for nd in nodes:
         if len(nd.members) == 1:
