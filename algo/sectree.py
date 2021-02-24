@@ -119,6 +119,23 @@ def combine_structures(seen, sec_graph, higher_level_secs):
         g = nx.Graph()
         for high_lvl_sec in higher_level_secs:
             g.add_node(high_lvl_sec)
+
+
+        # Add extra edges for sibling higher_lvl_secs which were siblings in the underlying graph
+        ## TODO it might be possible to make this cheaper. Not certain, but maybe if *any* of the members have an edge, it would imply that all do? Or idk something yeh?
+        for (idx, high_lvl_sec) in enumerate(higher_level_secs[:-1]):
+            for high_lvl_sec2 in higher_level_secs[idx+1:]:
+                q = True
+                for sec in high_lvl_sec.members:
+                    if not q:
+                        break
+                    for sec2 in high_lvl_sec2.members:
+                        if sec_graph.has_edge(sec, sec2):
+                            continue
+                        q = False
+                        break
+                if q:
+                    g.add_edge(high_lvl_sec, high_lvl_sec2)
         return higher_level_secs, g
 
     # print("after 1.1", clusters)
@@ -286,6 +303,8 @@ def combine_structures(seen, sec_graph, higher_level_secs):
                 for s in new_sec.members:
                     if sec_graph.has_edge(sec, s):
                         new_graph.add_edge(high_lvl_sec, new_sec)
+
+    
 
     return higher_level_secs, new_graph
 
