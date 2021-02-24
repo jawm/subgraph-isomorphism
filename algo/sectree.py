@@ -125,15 +125,14 @@ def combine_structures(seen, sec_graph, higher_level_secs):
         ## TODO it might be possible to make this cheaper. Not certain, but maybe if *any* of the members have an edge, it would imply that all do? Or idk something yeh?
         for (idx, high_lvl_sec) in enumerate(higher_level_secs[:-1]):
             for high_lvl_sec2 in higher_level_secs[idx+1:]:
-                q = True
+                q = False
                 for sec in high_lvl_sec.members:
-                    if not q:
+                    if q:
                         break
                     for sec2 in high_lvl_sec2.members:
                         if sec_graph.has_edge(sec, sec2):
-                            continue
-                        q = False
-                        break
+                            q = True
+                            break
                 if q:
                     g.add_edge(high_lvl_sec, high_lvl_sec2)
         return higher_level_secs, g
@@ -395,6 +394,7 @@ def simplify_sec(sec):
     if type(sec.members[0]) == int:
         return sec
     if len(sec.members) == 1:
+        sec.members[0].global_id = sec.global_id
         s = simplify_sec(sec.members[0])
         s.global_id = sec.global_id
         return s

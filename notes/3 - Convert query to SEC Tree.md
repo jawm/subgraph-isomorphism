@@ -434,3 +434,40 @@ tried to make it so that nodes which are at the same depth in the BFS are at
 the same rank, but it seems like this might not be super easy with graphviz, 
 at least not without modifying it heavily. That's ok though, since it is at 
 least visualising things correctly with the correct clustering as-is.
+
+Ok, I've added the code to join siblings together, and it seem to be working. 
+I'll maybe try adding our QT25, and see how the output for it looks to check.
+Of course, I don't actually know what the output is *supposed* to look like, 
+so I'll need to think that through also.
+
+Well, it doesn't work. At least, I don't think it does. Still not exactly 
+clear as to whether it should be adding the sibling edges on the particular
+example. Regardless, it definitely is messing up by trying to merge everything
+into a single node. Not sure why it's doing that, so we'll need to add a new
+rule to ensure it doesn't try to merge those things.
+
+I *think* that we maybe just add an edge if *any* members of the 
+`higher_lvl_sec`s are connected? Perhaps there's some edge case where that 
+will lead to incorrect conversions, but we'll just see I guess.
+
+Hmmm.... that's led to a *very* strange final result for QT25.
+
+Ok, turns out it was just a bug with my visualisation -- fixed. Output now 
+looks exactly how I was hoping which is awesome. At this point I think I just
+need to start testing a lot, and trying to find any issues with what I've got
+currently.
+
+That's all I'm gonna do tonight. Some things I should maybe think about:
+ - In our visualisation, the connected information needs printed on the 
+   subgraphs
+ - We also need to add information about the query graph node mapping into the
+   visualisation, so it's clear how to get back to the query graph
+ - I should maybe think about whether this conversion algorithm will turn out 
+   to be bijective i.e. could we get back to the query graph from the SEC
+   graph. If the answer is yes, then that could open some interesting options
+   for how we actually want to do our matching... or maybe not. We'll see.
+ - Finally, we just need to create a bunch of test queries, and verify that 
+   the output is what we want. We should look into automating that if possible
+   too, although that will require me to nail down exactly the object 
+   representation that we want for the final SEC graph.
+
