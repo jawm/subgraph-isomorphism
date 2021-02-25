@@ -479,3 +479,61 @@ I've drafted QT27, which is basically a single layer of 5 children beneath the
 start node, connected as a path, and they all descend from the start node. 
 This graph is definitely producing an incorrect result that needs 
 investigated.
+
+I think I need to work on getting the nodes marked into our visualisation.
+
+Ok, I've added some code in to show us the mapping back to query nodes in the 
+visualisation. Looking at QT27, it actually seems as if it could be correct.
+It certainly seems as if QT27 is opening up a lot of interesting thoughts. It
+seems that this conversion process might not be deterministic i.e. the order 
+in which nodes are evaluated will affect the structure of the resulting graph.
+This is definitely not desirable. I might have to tweak the rules somehow to
+make it so that it behaves in a predictable way... I think the nondeterminism
+here is probably arising from my algorithm simply not being complete, or 
+having some incorrect assumptions encoded into my rules.
+
+One possible issue with QT27 is that after grouping nodes {2,7}, which seems
+correct to me, it decides to also group {3,4}. I can see why this happens, 
+since this proposed group perfectly fits my rules, and there isn't any child
+nodes that would split it apart. The problem is, firstly, if this grouping 
+*is* valid, it raises the question about why grouping {4, 5} wasn't picked 
+instead. The result would be completely arbitrary, and having such a 
+nondeterministic algorithm feels wrong to me, for such a precise process. 
+
+So, the only conclusion is that the grouping {3,4} (and likewise {4,5}) 
+*isn't* valid. I can think of a few reasons that we might argue this. First of
+all, we can see that there is a sibling edge between 3 and 2, but there 
+*isn't* such an edge between 4 and 6. This is a somewhat asymmetric situation, 
+and I think it indicates that these nodes aren't compatible.
+
+So, we need to craft a rule to deal with this situation, so let's get precise.
+I think the basic rule is that all nodes in a group must have the same number
+of edges to another group. So if a member of group A has 3 edges to nodes in 
+group B, all nodes in A must have 3 edges to nodes in group B? I'm not exactly
+sure if it matters *which* nodes. Presumably since the rule gets applied in 
+both directions, it would work itself out... somehow?
+
+The interesting thing with the above rule, is that (I think) it requires all
+the groups to have been formed to the best of our ability already, i.e the 
+other rules have all been applied. Then, once that's happened, we'd need to
+have a loop that keeps trying to split the groups up based on this rule until
+it stabilises.
+
+*Another* interesting thing with this rule is that I think we'd need to run it
+again after we call `combine_structures`, if the returned split groupings have
+changed from the proposed groupings. If a split has occurred, it could have 
+broken the balance, so we'd need to run the rule again to ensure that things
+can be stabilised. So yeah, it's going to be complicated I think.
+
+Hmm... for the record, I don't think any of my rules that care about multiple
+groups have considered the groups descending from other parents. Not sure if 
+it matters, but gonna write it down so I remember -- Ok, I've glanced through
+the rules, and I don't think this would affect any of them :)
+
+However, the above issue definitely *does* apply to my new rule.
+
+Random thought -- unit tests would be *very* useful for a lot of this code. I
+should maybe try to create test for each of the different rules, since they 
+are nicely logically separated things we can work with. At this point the 
+larger structure of the algorithm seems quite stable, so it should hopefully
+be quite doable.

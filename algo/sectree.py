@@ -251,6 +251,25 @@ def combine_structures(seen, sec_graph, higher_level_secs):
                 next_seen[sec] = True
         clusters[parents] = groups_as_secs
                 
+    # Apply our cross group edge counting rule
+    # We use the pattern of continually refining the groupings until no changes are made, and then we know the rule is fully complied with
+    l = 0
+    while l != len(new_secs):
+        for new_sec in new_secs:
+            split_groups = defaultdict(lambda: [])
+            for new_sec2 in new_secs:
+                if new_sec == new_sec2:
+                    continue
+                while True:
+                    # TODO finish this tomorrow. I think it would be very useful if we still had the dict to work with.
+
+                    lbl_matching_group, lbl_matching_counts, child_group = split_cross_group_edge_count(new_sec.members, new_sec2.members, sec_graph)
+                    group_lbl = f"{lbl} -> " + ",".join(f"{k}:{v}" for k, v in sorted(lbl_matching_counts.items()))
+                    split_groups[group_lbl] = lbl_matching_group
+                    if len(child_group) == 0:
+                        break
+
+    # At this point, we've potentially split the groups, so we need to do a split check.
 
     need_split, new_graph = combine_structures(next_seen, sec_graph, new_secs)
     while len(need_split) > len(new_secs):
@@ -306,6 +325,20 @@ def combine_structures(seen, sec_graph, higher_level_secs):
     
 
     return higher_level_secs, new_graph
+
+def split_cross_group_edge_count(grp1, grp2, sec_graph):
+    neighbours = sec_graph[child_group[0]]
+    counts = defaultdict(lambda: 0)
+    for nd in neighbours:
+        counts[nd.label] += 1
+    split_out = []
+    group = [child_group[0]]
+    for sec in child_group[1:]:
+        if split_2_3_breaker(counts, sec_graph, sec):
+            split_out.append(sec)
+        else:
+            group.append(sec)
+    return child_group, counts, split_out
 
 def split_2_3(child_group, sec_graph):
     neighbours = sec_graph[child_group[0]]
@@ -416,15 +449,25 @@ rankdir=LR
 }}"""
 
 def _visualise_SEC_graph_nodes(sec_graph, start):
-    res = f"{start.global_id} [label=\"{start.label}\nconnected: {start.is_connected}\"]"
+    res = f"{start.global_id} [label=\"{start.label}\nconnected: {start.is_connected}\nmembers=[{_vis_node_ids(start)}]\"]"
     for (nd, succ) in nx.bfs_successors(sec_graph, start):
         for n in succ:
-            res = f"{res}\n{n.global_id} [label=\"{n.label}\nconnected: {n.is_connected}\"]"
+            res = f"{res}\n{n.global_id} [label=\"label:{n.label}\nconnected: {n.is_connected}\nmembers:[{_vis_node_ids(n)}]\"]"
 
     for (nd, nd2) in sec_graph.edges:
         res = f"{res}\n{nd.global_id}--{nd2.global_id};"
 
     return res
+
+def _vis_node_ids(node):
+    res = ""
+    if type(node.members[0]) == int:
+        res = f"{res}{node.members[0]}, "
+    else:
+        for nd in node.members:
+            res = f"{res}{_vis_node_ids(nd)}"
+    return res
+            
 
 def _visualise_SEC_graph_replications(cluster_id, sec_graph, nodes, replications):
     res = f"""subgraph cluster_{cluster_id} {{
