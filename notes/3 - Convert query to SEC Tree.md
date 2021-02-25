@@ -537,3 +537,42 @@ should maybe try to create test for each of the different rules, since they
 are nicely logically separated things we can work with. At this point the 
 larger structure of the algorithm seems quite stable, so it should hopefully
 be quite doable.
+
+--- next day ---
+
+Ok, let's continue with adding that new rule.
+
+Actually, taking a step back and looking at QT27, I think I'm a bit off with 
+it. It seems to me like there's two permutations of the B nodes for any valid
+matching. Firstly, there is {2,3,4,5,6}, and secondly, {6,5,4,3,2}. No other
+permutations exist that I can think of. Yesterday I was assuming for some 
+reason that there was going to be more symmetric groupings to find, but I 
+don't really think there is to be honest...
+
+I think the rule I proposed yesterday is basically correct but I think the 
+important detail is maybe that it should actually run as one of the first 
+rules, rather than after other rules. 
+
+Well... I guess my uncertainty right now is that I'm not sure my current 
+algorithm knows how to deal with the symmetry seen in QT27. Like I don't think
+any of my rules lead to an SEC graph that would be able to exploit this 
+symmetry. Obviously, I want to be able to maximise the amount of symmetric 
+regions that can be recognised. Indeed I think it should be possible to 
+recognise *all* types of symmetric regions in a graph, with the right 
+algorithm.
+
+I'm thinking that we can make use of the sibling connections to make this work
+sort of. Essentially, once the conversion has completed, when we're working 
+out valid permutations, we have to ensure that all permutations would respect
+the sibling connections. In the case of QT27, this would mean that the fully
+converted graph would look like the initial query graph. When checking for
+permutations, it would know that just swapping nodes 3 and 5 for example, 
+wouldn't produce a valid permutation, since 3 has an edge with 2, but 5 
+doesn't, and likewise 3 doesn't have an edge with 6, while 5 does. That's just
+one example, but I think it should make it somewhat clear. 
+
+So, the problem now is we need to figure out a good rule for ensuring that the
+final result for QT27 results in no change being made. I guess that this rule
+actually derives from the stuff we were talking about before. In essence, all
+nodes in a group must have edges to the same set of sibling nodes outside of
+that group. 

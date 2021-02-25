@@ -253,21 +253,22 @@ def combine_structures(seen, sec_graph, higher_level_secs):
                 
     # Apply our cross group edge counting rule
     # We use the pattern of continually refining the groupings until no changes are made, and then we know the rule is fully complied with
-    l = 0
-    while l != len(new_secs):
-        for new_sec in new_secs:
-            split_groups = defaultdict(lambda: [])
-            for new_sec2 in new_secs:
-                if new_sec == new_sec2:
-                    continue
-                while True:
-                    # TODO finish this tomorrow. I think it would be very useful if we still had the dict to work with.
+    # l = 0
+    # while l != len(new_secs):
+    #     l = len(new_secs)
+    #     for new_sec in new_secs:
+    #         split_groups = defaultdict(lambda: [])
+    #         for new_sec2 in new_secs:
+    #             if new_sec == new_sec2:
+    #                 continue
+    #             while True:
+    #                 # TODO finish this tomorrow. I think it would be very useful if we still had the dict to work with.
 
-                    lbl_matching_group, lbl_matching_counts, child_group = split_cross_group_edge_count(new_sec.members, new_sec2.members, sec_graph)
-                    group_lbl = f"{lbl} -> " + ",".join(f"{k}:{v}" for k, v in sorted(lbl_matching_counts.items()))
-                    split_groups[group_lbl] = lbl_matching_group
-                    if len(child_group) == 0:
-                        break
+    #                 lbl_matching_group, lbl_matching_counts, child_group = split_cross_group_edge_count(new_sec.members, new_sec2.members, sec_graph)
+    #                 group_lbl = f"{lbl} -> " + ",".join(f"{k}:{v}" for k, v in sorted(lbl_matching_counts.items()))
+    #                 split_groups[group_lbl] = lbl_matching_group
+    #                 if len(child_group) == 0:
+    #                     break
 
     # At this point, we've potentially split the groups, so we need to do a split check.
 
