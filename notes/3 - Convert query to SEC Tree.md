@@ -590,3 +590,42 @@ correctly also, which is good.
 So, at this point we're back to the position where everything *seems* to be 
 correct, although I've been here before. I need to continue designing test
 cases to work through, and try to unearth weird edge cases. 
+
+--- next day ---
+
+I think at this point, I'm going to look through all the other existing test 
+cases which I copied over from the original project. Let's keep a record here:
+
+QT1:  Simple case that would impossible to get wrong (ha)
+QT2:  More complex graph. Conversion currently looks INCORRECT
+QT3:  Simple 3 node graph. Correct
+QT4:  I think this was an example data graph from TurboISO. Input maybe 
+  incorrect.
+QT5:  Correct
+QT6:  Correct
+QT7:  Very similar to QT6, just one node different. Correct
+QT8:  More complex example, lots of different B groups. Correct
+QT9:  Causes program to throw exception? INCORRECT
+QT10: Correct. Had to draw it out tho
+QT11: Also drawn out, correct.
+QT12: Correct
+QT13: Correct
+QT14: Trivial, correct
+QT15: Similar to above, correct
+QT16: No change, correct
+QT17: Correct, although highlights need for better visualisation 
+QT18: One of our main tests. Correct
+QT19: Correct, same visualisation issues though
+QT20: No change made, correct
+QT21: Correct
+QT22: INCORRECT, issue arises during intermediate step it seems.
+QT23: Another main test, correct
+QT24: Same as above, correct
+QT25: As above, correct
+QT26: Another correct of our most recent tests
+QT27: Final test, correct.
+
+Ok then, well I'm pretty happy with how that went. Almost all the graphs had a
+correct result. I think we'll start by looking at the most egregious error, 
+which has to be the exception thrown by QT9.
+
