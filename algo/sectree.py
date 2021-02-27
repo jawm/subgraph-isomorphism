@@ -102,12 +102,12 @@ def combine_structures(seen, sec_graph, higher_level_secs):
     clusters = defaultdict(lambda: defaultdict(lambda: []))
 
     # print("h", groups)
-
+    all_siblings = set()
     for group in groups:
         for possible_child in sec_graph[group]:
             if possible_child in seen:
                 continue
-
+            all_siblings.add(possible_child)
             parents = frozenset(high_lvl_sec_mapping[p] for p in sec_graph[possible_child] if p in seen)
             # todo at this point we actually want to check if the `parents` group is compat with higher_lvl_sec??
 
@@ -180,6 +180,20 @@ def combine_structures(seen, sec_graph, higher_level_secs):
                     break
         cluster1 = split_groups
 
+        # 2.6 All nodes in a group must have connections to the same set of siblings
+        split_groups = defaultdict(lambda: [])
+        for lbl, child_group in cluster1.items():
+            for sec in child_group:
+                connected_siblings = set()
+                for possible_sibling in all_siblings:
+                    if possible_sibling in child_group:
+                        continue
+                    if sec_graph.has_edge(sec, possible_sibling):
+                        connected_siblings.add(possible_sibling)
+                i = "~".join(str(i) for i in sorted(nd.global_id for nd in connected_siblings))
+                split_groups[f"{lbl}{i}"].append(sec)
+        cluster1 = split_groups
+
         # 2.5 If any nodes in a group are connected to each other, all nodes must be connected to each other.
         split_groups = defaultdict(lambda: [])
         for lbl, child_group in cluster1.items():
@@ -192,6 +206,7 @@ def combine_structures(seen, sec_graph, higher_level_secs):
                 if len(child_group) == 0:
                     break
         
+
         
         
         # Now that the rules have been applied, we can look for any breaking splits that occurred.
@@ -250,27 +265,6 @@ def combine_structures(seen, sec_graph, higher_level_secs):
                 parent_lookup[sec] = parents
                 next_seen[sec] = True
         clusters[parents] = groups_as_secs
-                
-    # Apply our cross group edge counting rule
-    # We use the pattern of continually refining the groupings until no changes are made, and then we know the rule is fully complied with
-    # l = 0
-    # while l != len(new_secs):
-    #     l = len(new_secs)
-    #     for new_sec in new_secs:
-    #         split_groups = defaultdict(lambda: [])
-    #         for new_sec2 in new_secs:
-    #             if new_sec == new_sec2:
-    #                 continue
-    #             while True:
-    #                 # TODO finish this tomorrow. I think it would be very useful if we still had the dict to work with.
-
-    #                 lbl_matching_group, lbl_matching_counts, child_group = split_cross_group_edge_count(new_sec.members, new_sec2.members, sec_graph)
-    #                 group_lbl = f"{lbl} -> " + ",".join(f"{k}:{v}" for k, v in sorted(lbl_matching_counts.items()))
-    #                 split_groups[group_lbl] = lbl_matching_group
-    #                 if len(child_group) == 0:
-    #                     break
-
-    # At this point, we've potentially split the groups, so we need to do a split check.
 
     need_split, new_graph = combine_structures(next_seen, sec_graph, new_secs)
     while len(need_split) > len(new_secs):

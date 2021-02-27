@@ -576,3 +576,17 @@ final result for QT27 results in no change being made. I guess that this rule
 actually derives from the stuff we were talking about before. In essence, all
 nodes in a group must have edges to the same set of sibling nodes outside of
 that group. 
+
+--- next day ---
+
+Ok then... let's do it I guess.
+
+So, it turns out it wasn't too difficult, and the rule was able to be 
+implemented in the same fashion as the existing rules. I did add a higher 
+level variable to track some things that made it a bit easier, but overall not
+too bad. The rule appears to work perfectly, and converts all previous queries
+correctly also, which is good.
+
+So, at this point we're back to the position where everything *seems* to be 
+correct, although I've been here before. I need to continue designing test
+cases to work through, and try to unearth weird edge cases. 
