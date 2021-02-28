@@ -629,6 +629,7 @@ Ok then, well I'm pretty happy with how that went. Almost all the graphs had a
 correct result. I think we'll start by looking at the most egregious error, 
 which has to be the exception thrown by QT9.
 
+Aside:
 I've just done a bit of googling for prior work, and the term "automorphic 
 equivalence" has come across my radar. Based on what I see on wikipedia, it 
 seems the term isn't directly relevant to the work I'm doing, but is closely 
@@ -653,3 +654,56 @@ Ok, my main tests look ok at least. At some point I'll rerun everything,
 ideally set it up as automated as I can, checking things by hand is very 
 uncool. Probably can't automate until the datastructures stop fluctuating so 
 much.
+
+Ok, so QT4 did indeed have a mistake in the input file. After fixing it 
+however, the converted graph looks incorrect. The result really is quite off.
+I'll have a look at the other graphs with issues to see what's up with them, 
+and try to find a common theme.
+
+QT2 still looks wrong. All the B's get merged at once which they shouldn't. 
+QT22 looks like it's having a similar issue to QT9. I think QT2 could be 
+something separate, and it's probably easier to identify, so I'll look at it
+first.
+
+Hmm... it feels weird, but I'm thinking the rule we added the other day that
+sibling connections must be to the same set of nodes for all members of a
+group, should actually be extended so that it's not just about sibling nodes,
+but also about child nodes? It will possibly reduce the effectiveness of the
+conversion though, since it wouldn't be able to optimistically group things...
+
+I feel like, up until now we haven't *actually* been merging larger sections 
+in a way that would let us truly see the symmetry in a graph. The handpicked
+test cases look decent once converted, but the problem is that our 
+"replications" are still on the level of individual nodes, rather than on 
+structural subsections of the graph. I thought for a while that I'd be able to
+figure out that information from the graph we were building up, but now I'm
+not so sure. I'm starting to think that we need to rethink how we're doing 
+things to allow large sections which are made up of multiple generations in 
+the BFS to be merged into a single unit.
+
+Perhaps what we do is similar to currently:
+
+  - optimistically merge all the nodes at a given layer into a single 
+    structure
+  - apply rules similar to what we currently have, which split things out into
+    a smaller number of structures
+  - once the structures have been found, we identify which parent structures 
+    that new child structure is inheriting from
+  - if a child structure inherits from just a single parent structure, then we
+    merge it into that parent structure (? maybe only when the recursion is 
+    done successfully)
+  - if a child inherits from multiple parent structures, then it needs to be 
+    in a higher level structure. We backtrack at this point maybe??
+  - If backtracking occurs, it might mean that structures need to be broken 
+    apart so we can try again
+
+The above process is very similar to what I have currently. I think the main
+difference is that we need to actually add child nodes into the same 
+structures as the parent nodes after the recursion has completed. Within those
+structures we still need to maintain edge information, so that when the 
+algorithm is repeated at a higher level, it's able to accurately assess 
+whether two nodes are equivalent.
+
+It's a bit annoying to have to do this, since it's a pretty drastic change, 
+but I think what I have currently just isn't correct, so I suppose a change is
+needed.
