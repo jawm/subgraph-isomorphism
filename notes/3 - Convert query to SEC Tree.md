@@ -707,3 +707,21 @@ whether two nodes are equivalent.
 It's a bit annoying to have to do this, since it's a pretty drastic change, 
 but I think what I have currently just isn't correct, so I suppose a change is
 needed.
+
+--- next day ---
+
+Ok, I think this refactor is going to be pretty extensive. I think the easiest
+way of doing things *might* be to actually have the structural nesting done as
+a separate thing from the graph. So the graph would indicate which nodes are 
+connected to which other nodes, but the structures would indicate how sets of 
+nodes are composed.
+
+So umm... how do we actually do that?
+
+I've drawn out a few test cases, QT28-30. They demonstrate some interesting 
+behaviour, and I've worked through the step by step conversion for them, and 
+found it quite helpful. QT30 in particular makes me think that nodes with 
+different labels will need to be able to be put into the same groups. I'm
+starting to think the only rule which will apply to nodes is that they have 
+the same set of neighbours (with the exception made for nodes connected to 
+each other). If this is the case it could prove to be quite nice.

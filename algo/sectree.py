@@ -60,6 +60,11 @@ class Nd:
     def is_node(self):
         return True
 
+class ReplicationUnit:
+    def __init__(self, replications, members):
+        self.replications = replications
+        self.members = members
+
 def _build_initial_sec_graph(graph, start_node):
     sec_graph = nx.Graph()
     mapping = {}
