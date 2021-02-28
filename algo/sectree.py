@@ -244,8 +244,8 @@ def combine_structures(seen, sec_graph, higher_level_secs):
                     assert(len(i) > 0)
                     new_higher_lvl_secs.append(SEC(list(i), high_lvl_sec.label, high_lvl_sec.is_connected))
                     
-
-            if len(new_higher_lvl_secs) > len(clusters):
+            if len(new_higher_lvl_secs) > len(higher_level_secs): # > len(clusters):
+                # print("pop", len(new_higher_lvl_secs), len(clusters))
                 return new_higher_lvl_secs, None
         
         clusters[parents] = split_groups
@@ -267,7 +267,9 @@ def combine_structures(seen, sec_graph, higher_level_secs):
         clusters[parents] = groups_as_secs
 
     need_split, new_graph = combine_structures(next_seen, sec_graph, new_secs)
+    # print("ret", len(need_split), len(new_secs), new_graph)
     while len(need_split) > len(new_secs):
+        # print("doing loopy")
         new_secs = need_split
         to_split = defaultdict(lambda: [])
         for group in need_split:
@@ -304,9 +306,12 @@ def combine_structures(seen, sec_graph, higher_level_secs):
                 new_higher_lvl_secs.append(SEC(list(i), high_lvl_sec.label, high_lvl_sec.is_connected))
 
         if len(new_higher_lvl_secs) > len(higher_level_secs):
+            # print("here2")
             return new_higher_lvl_secs, None
         else:
             need_split, new_graph = combine_structures(next_seen, sec_graph, new_secs)
+
+    # print("hmm", len(need_split), len(new_secs), new_graph)
 
     # 5. Add groups and edges to the graph
     for high_lvl_sec in higher_level_secs:

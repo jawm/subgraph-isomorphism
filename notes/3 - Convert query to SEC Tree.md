@@ -629,3 +629,27 @@ Ok then, well I'm pretty happy with how that went. Almost all the graphs had a
 correct result. I think we'll start by looking at the most egregious error, 
 which has to be the exception thrown by QT9.
 
+I've just done a bit of googling for prior work, and the term "automorphic 
+equivalence" has come across my radar. Based on what I see on wikipedia, it 
+seems the term isn't directly relevant to the work I'm doing, but is closely 
+related. The wikipedia page (https://en.wikipedia.org/wiki/Similarity_(network_science)#Automorphic_equivalence)
+also discusses Structural Equivalence. This term clearly has a different 
+meaning from the Structural Equivalence Class discussed in my own research, 
+and as such I will *definitely* have to think of a different name. However, I
+think we are certainly dealing with a type of equivalence, since all the
+definitions on that page feel quite close to what I'm trying to achieve. 
+Perhaps something like "Strict Automorphic Equivalence", to make it clear that
+we *do* care about the label of the node. That being said, I might be wrong 
+about the definition of Automorphic Equivalence, it depends what precisely 
+they mean when talking about the "label" of the nodes. Normally the same label
+could be seen on multiple nodes, but we don't see that on the examples on that
+page. For now I'll hold judgement, and come back to it later.
+
+Hmmm... I've put in a potential fix for QT9, and it now runs. However, the 
+result looks quite wrong. Going to need to check that things haven't regressed
+elsewhere.
+
+Ok, my main tests look ok at least. At some point I'll rerun everything, 
+ideally set it up as automated as I can, checking things by hand is very 
+uncool. Probably can't automate until the datastructures stop fluctuating so 
+much.
