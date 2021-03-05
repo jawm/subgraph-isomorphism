@@ -725,3 +725,40 @@ different labels will need to be able to be put into the same groups. I'm
 starting to think the only rule which will apply to nodes is that they have 
 the same set of neighbours (with the exception made for nodes connected to 
 each other). If this is the case it could prove to be quite nice.
+
+--- several day later ---
+
+Ok, feeling a bit healthier, so let's get back into this.
+
+I'm thinking the way we want to do this change is as follows. The final data
+structure will be made up of a graph and a tree. The graph will basically have
+the same structure as the query graph, but with the replications taken out. 
+The tree will contain the replication units, showing how they compose. Each
+replication unit will either contain other replication units, or at the bottom
+level they may contain a single node, which maps back to the original query 
+graph.
+
+I'm not really sure that systems quite going to work though. We really need 
+each replication unit to be somewhat aware of how it connects to the outside
+world. Consider QT30, during it's second simplification call. It's needing to
+merge the 'b' and 'c' nodes in each of the replication units. To do this it 
+needs to fully understand what other nodes they are connected to. This is 
+kind of tricky though. Since those nodes could actually exist several layers
+down inside a number of replication units. We don't care about edges for these
+nodes unless they cross the 'border' for a particular replication unit. So I 
+guess we need a way to lookup edges the start inside a replication unit, and 
+end outside of it. That's somewhat complicated I think. 
+
+Hmmm, I suppose it might be useful to consider what the highest common 
+replication unit is for a given edge. Like the lowest common denominator for 
+the two nodes. I think that, typically, that's going to be the thing we care 
+about when trying to merge things?
+
+ We also need to think about how we're going to compare the internal structure
+ of replication units. Basically to be able to merge, they will need to have 
+ isomorphic internal structures, and also be connected to the exact same set 
+ of external nodes. Also that internal isomorphism must also account for the
+ replications. I suppose one way to check that would be to get a list of all
+ original query nodes for each replication, and make a subgraph of the query
+ graph including only those nodes. If it's isomorphic between the replication
+ units then it's good.
