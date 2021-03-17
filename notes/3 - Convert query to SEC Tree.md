@@ -762,3 +762,35 @@ about when trying to merge things?
  original query nodes for each replication, and make a subgraph of the query
  graph including only those nodes. If it's isomorphic between the replication
  units then it's good.
+
+--- next day ---
+
+Well I've done a bunch of thinking about how to represent this datastructure
+in a way that's useful for the things we need to be able to do with it.
+
+I'm thinking that we may be able to represent everything in one big graph 
+after all, and to be able to do so *without* encapsulating subgraphs. It might
+still be useful to think in terms of encapsulations, but let's see how this
+looks.
+
+--- like two weeks later ---
+
+Ok, I've taken some time to do other stuff and now I'm back. I really want to
+tackle this datastructure decision once and for all, and then get it 
+implemented, so here's how it's going to go.
+
+We're going to have a class `ReplicationGraph`. This is going to contain both 
+a graph representation of the nodes, and also a tree for the nesting of our
+`ReplicationUnit` class. This class will contain a list of all the nodes it 
+contains at the top level, as well as another list of all the 
+`ReplicationUnit`s that it contains.
+
+I think the `ReplicationGraph` will also need to include a mapping from the 
+RGNodes back to the original query nodes. This will be a one to many mapping.
+It might also be useful to store a separate mapping from edge pairs back to a
+"lowest common denominator". This LCD would be the deepest RU which 
+encapsulates both nodes from the edge. This information should be useful to 
+have cached. However, I think this is basically just an optimisation, so it's
+probably not actually necessary.
+
+Let's get started.
