@@ -794,3 +794,35 @@ have cached. However, I think this is basically just an optimisation, so it's
 probably not actually necessary.
 
 Let's get started.
+
+Ok. It seems to me that our `ReplicationUnit` is going to want to have a 
+precise, deterministic ordering of it's contained items, both children and 
+nodes. This will enable us to efficiently compare two units to check if they 
+are equivalent. I think for now we'll order by... actually  maybe it's not
+possible to determine such an ordering? Like if we consider a clique, all the
+nodes are equivalent, so there'd not really be a way to figure out the correct
+ordering. Of course, in the case of clique that's fine, but in other graphs it
+might be more annoying. There's definitely ways to do it properly but it's 
+just going to be a massive pain, I can tell already.
+
+Well I suppose that the ordering of RNodes is pretty straightforward. For them
+we can just do the ordering based on which query nodes they map to. Basically
+just order based on the lowest ID of query nodes that a given RNode maps to.
+Since any QNode can only be pointed to be a single RNode, we know there won't
+be any conflicts.
+
+As to ordering contained RUs... well, I suppose we could just skip that if we
+were able to come up with some sort of "hash" for the RU. I think that if we
+kept a cache of all nodes that exist within a RU, you could use that to 
+quickly build a subgraph of the query graph. When comparing RUs all you'd need
+to do would be check if their respective query subgraphs are isomorphic. Seems
+kind of crazy but I guess it'd work?
+
+And if we did that, then we probably wouldn't even need to think about 
+ordering the GNodes either. Not that it's especially difficult, but still.
+
+I think that if the two subgraphs *are* considered isomorphic we'd also need 
+to ensure that the nodes also all had the same degrees in the context of the
+full query graph, since that would affect things... I think?
+
+Ok, so I've got the test passing. It seems as if it's kind of working?
