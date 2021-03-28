@@ -826,3 +826,40 @@ to ensure that the nodes also all had the same degrees in the context of the
 full query graph, since that would affect things... I think?
 
 Ok, so I've got the test passing. It seems as if it's kind of working?
+
+---
+
+Ok, it's been a while. I guess motivation can be tough sometimes. Anyway, I'm
+back, and ready to get back on it, so where were we?
+
+Ok, I've been starting to work on the merging process and had a slight idea.
+When we're trying to combine RUs I guess there's two ways that can happen. In
+one instance, the two would actually get merged such that the new RU accounts
+for both. So essentially you would get something with replications > 1. This
+would occur when labels are the same etc. In the other case, you have a pair
+of RUs which are compatible in that their sets of neighbours are equal, but 
+they themselves aren't exactly equal. In this case, it's sufficient to simply
+place them both into an RU with replications=1. This seems to make sense, but
+I'll give it some more thought to see if there is further nuance.
+
+The other thing is that we need a way for child RUs to get pulled up into the
+parent RU under certain circumstances. We will do this when the child RU has 
+only get edges going into the parent RU. Or maybe require that it only has a
+single outgoing edge (which by definition would go to the parent). Need to 
+figure out which of those is correct... I think the former, QT30 itself 
+illustrates that you might have multiple edges flowing to the parent, but it 
+is still valid to merge in.
+
+Ok, so I've gone through QT30 in a bunch more detail and it's giving me some
+insights. I'm realising now that the initial conversion from query graph to
+replication graph doesn't need to wrap the entire thing into a single RU. The
+reason being that after the full simplification has occurred, the entire graph
+will end up being wrapped in a single x1 RU. But during the simplification
+process this could throw up some issues. Reason being that we wouldn't be able
+to find the lowest common ancestor. I suspect this might not actually be an 
+issue as I'm not sure if we actually need to do that. We would never be 
+dealing with RUs other than the top level ones, which therefore won't have an
+ancestor.
+
+Anyways, when merging siblings, we need to prioritise merging of isomorphic 
+RUs before those that merely have matching neighbour sets.
