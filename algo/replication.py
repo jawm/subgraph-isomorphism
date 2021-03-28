@@ -17,6 +17,13 @@ class ReplicationUnit():
     def sub_nodes(self):
         return self.contained_nodes + list(itertools.chain(*(x.sub_nodes() for x in self.children)))
 
+    def outgoing_edges(self, rg):
+        """
+        returns an iterator of nodes in `rg.node_graph` which aren't in `self` but which are connected to it by an edge.
+        """
+        return (nbr for nd in self.sub_nodes() for nbr in rg.node_graph[nd] if nbr not in self.sub_nodes())
+
+
     @staticmethod
     def isomorphic(RG, RU1, RU2):
         if RU1.replications != RU2.replications:
@@ -83,24 +90,25 @@ class ReplicationGraph():
         """
 
         # 1. firstly, we need to identify the list of children which are descending from the things in proposed_merges
-        children_ru = []
+        parent_rus = [] # RUs in `self` which are contained within `proposed_merges`
+        children_ru = [] # RUs in `self` which descend from `parent_rus`
+        proposed_merge_lookup = {} # maps from RUs in `self`, to groups in `proposed_merges`
+
         for merge_group in proposed_merges:
             for ru in merge_group:
-                # We want to find edges which start in ru, and end outside it.
-                # For each of those edges, look at the ru it ends in.
-                # If this destination is in `seen`, we can continue. 
-                # Otherwise, it is a child of the ru, and so is something we are going to be attempting to merge.
-                
-                # So first, we loop over all edges, to do that we loop over the contained nodes
-                for nd in ru.sub_nodes():
-                    for neighbour in self.node_graph[nd]:
-                        # If neighbour is in `seen`, not a child
-                        if seen[neighbour]:
-                            continue
-                        # If neighour within ru, not a child
-                        if neighbour in ru.sub_nodes():
-                            continue
-                        # now we know it is a child, so get the associated RU, and add it as child.
-                        children_ru.append(self.node_ru_mapping[nd])
+                parent_rus.append(ru)
+                proposed_merge_lookup[ru] = merge_group
+
+        for parent_ru in parent_rus:
+            for neighbour in parent_ru.outgoing_edges(self):
+                if seen[neighbour]:
+                    continue
+                children_ru.append(self.node_ru_mapping[neighbour])
+
+        print("CHILDREN", children_ru)
+        print("PARENTS", parent_rus)
+        print("LOOKUP", proposed_merge_lookup)
+
+        # 2. Optimistically merge everything?
 
         return None, False

@@ -827,7 +827,7 @@ full query graph, since that would affect things... I think?
 
 Ok, so I've got the test passing. It seems as if it's kind of working?
 
----
+--- another two weeks go bye... ---
 
 Ok, it's been a while. I guess motivation can be tough sometimes. Anyway, I'm
 back, and ready to get back on it, so where were we?
@@ -863,3 +863,11 @@ ancestor.
 
 Anyways, when merging siblings, we need to prioritise merging of isomorphic 
 RUs before those that merely have matching neighbour sets.
+
+--- next day ---
+
+Last night I think we finished identifying the child nodes. So today, lets 
+make a start on the merging process.
+
+Ok I actually ended up quickly rewriting the logic for the building of 
+children. It's a bit cleaner now and I've got a lookup thing.
