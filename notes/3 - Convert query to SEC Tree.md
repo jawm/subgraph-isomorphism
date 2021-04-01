@@ -871,3 +871,56 @@ make a start on the merging process.
 
 Ok I actually ended up quickly rewriting the logic for the building of 
 children. It's a bit cleaner now and I've got a lookup thing.
+
+--- ... ---
+
+Well the hayfever has me good, but lets try to get something done anyways.
+
+Made a little progress, but I think I might have to change approach a bit.
+
+--- Couple days later ---
+
+Umm yeah I think we need to modify way we're approaching splitting maybe.
+Well, reading the split checking code from the previous version... wow I have
+no idea what that's doing. Let's make sure to document things better this time
+around.
+
+Slightly off topic, but did some googling there. The term "automorphism" seems
+to be extremely relevant to the work I'm doing here. In particular it leads to
+this page on "Symmetry groups" (https://en.wikipedia.org/wiki/Symmetry_group).
+The description seems to capture the essence of what I'm doing really well:
+    "the symmetry group of a geometric object is the group of all 
+     transformations under which the object is invariant"
+Now tell me that's not interesting.
+
+Anyways, now I'm tempted to just spend the night reading wikipedia and 
+learning about group theory to see if there's any relevancy there too...
+
+Hmm, it seems that graph automorphisms are interesting, but I think that they 
+are actually more closely related to the original TurboISO work than to what
+I'm doing. With these graph automorphisms as described here: https://faculty.etsu.edu/gardnerr/4127/algebra-club/auto-talk.pdf
+it seems that nodes are only swappable if they will have precisely the same 
+set of neighbours after the sway, which is essentially what was described by
+the Neighbourhood Equivalence Class in TurboISO. 
+
+However maybe I'm slightly off here - the above presentation shows that an
+automorphism isn't made up of just a single swapping of nodes, but rather a
+mapping of nodes from V(G) -> V(G'). So multiple swaps are being made at once,
+and the result is considered automorphic if and only if all nodes still 
+precisely the same set of neighbours as they did before the mapping...
+
+Hmm, yes I actually think that this perfectly describes what it is that I'm 
+doing...
+
+So I wonder if there's any algorithms out there for this already. It would be
+interesting to see if I could even just take existing code...
+
+Perhaps one difference with the Graph automorphism problem is that it doesn't
+work outwards from some starting node... Well, it certainly makes it slightly
+different, although I don't know if having a specific starting node would ever
+*increase* the possible automorphisms, I think it would only restrict it.
+
+I mean, perhaps this will allow us to broaden our horizons more... Like what 
+would happen if we just made use of the full automorphism group and said that 
+there's that many results for every valid matching found... would that be 
+valid?
