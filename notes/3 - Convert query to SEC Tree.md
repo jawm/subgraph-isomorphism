@@ -924,3 +924,39 @@ I mean, perhaps this will allow us to broaden our horizons more... Like what
 would happen if we just made use of the full automorphism group and said that 
 there's that many results for every valid matching found... would that be 
 valid?
+
+Actually yeah, you 100% could, the only thing is that you'd have to be careful
+that you don't double count a result by coming from some other angle. So for
+example if your start node is itself swapped by an automorphism, you have to
+be aware of the data graph node that it's being mapped to. If another matching
+is found starting from that node, you'd need to be careful to ensure it's not
+the same one that was already found. 
+
+How to do this? Well one option might just be to disallow automorphisms that
+involve swapping the start node, but that seems like it could (in theory) 
+block a large number of valid automorphisms (in the degenerative case, 
+granted). Another option would be to somehow track the full set of data graph
+nodes used in the result, and require that no other result is allowed to use 
+precisely that set of nodes (since it's guaranteed to have been covered by an
+automorphism of an earlier matching). However, tracking these sets would 
+basically be impossible, right? Like there it would use an insane amount of 
+RAM plus it would be very slow to look up.
+
+Perhaps the problem could be dealt with by saying that, when we encounter an
+automorphism that swaps the start node, we must immediately do an exploration
+from that swapped data node? *ACTUALLY*, what we could do is actually delete 
+the edge between those swapped nodes.... or could we... maybe not actually.
+Well perhaps a related idea is that after fully exploring a candidate region,
+and extracting all the results, you simply delete that starting node from the
+graph.
+
+But I suppose this would break certain things. Like for example if you're 
+wanting to do parallel processing it could be weird. Plus it would require you
+to essentially just explore a single candidate region at a time, since you'd
+potentially have problems where the start node for a region is itself 
+contained within another region.
+
+Perhaps there is a way that the start node could be guaranteed to never 
+intersect with another candidate region, we could perhaps just make it that 
+when identifying candidate regions, this is one of the rules you have to 
+confirm.
