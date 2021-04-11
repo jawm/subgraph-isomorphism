@@ -960,3 +960,23 @@ Perhaps there is a way that the start node could be guaranteed to never
 intersect with another candidate region, we could perhaps just make it that 
 when identifying candidate regions, this is one of the rules you have to 
 confirm.
+
+--- several days later ---
+
+Ok, I haven't done any coding for this recently, but I've done a lot of 
+thinking, and a lot of research. I've spent some time trying to understand
+basic group theory, and the properties of a graph's automorphism group. It 
+seems like this idea is really promising and could be very useful for solving
+these problems. 
+
+I've downloaded a program called Conauto which claims to be able to compute 
+the automorphism group for graphs presented in the DIMACS format, so I'm going
+to convert a few of our querygraphs and have a look at them using this 
+program.
+
+Interestingly, in the process of looking more closely at QT23, it seems that 
+the process I had been pursuing would have at least needed some modifications
+to actually be able to recognise the full symmetry of the graph. Anyways, it 
+seems to me upon a manual inspection that `|Aut(qt23)| = 8`. Conauto on the 
+other hand is saying it's 2... It also is talking about orbtis and other stuff
+too though so I need to look into it more.
