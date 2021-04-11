@@ -980,3 +980,10 @@ to actually be able to recognise the full symmetry of the graph. Anyways, it
 seems to me upon a manual inspection that `|Aut(qt23)| = 8`. Conauto on the 
 other hand is saying it's 2... It also is talking about orbtis and other stuff
 too though so I need to look into it more.
+
+--- two days later ---
+
+Well I figured out the issue with conauto -- it assumes that the input graphs
+are directed. When I added extra edges to the input, everything started 
+working beautifully. For QT23 it computes 8 automorphisms, which is exactly
+what we expected. Excellent.
