@@ -987,3 +987,19 @@ Well I figured out the issue with conauto -- it assumes that the input graphs
 are directed. When I added extra edges to the input, everything started 
 working beautifully. For QT23 it computes 8 automorphisms, which is exactly
 what we expected. Excellent.
+
+--- the next day (?) ---
+
+Had a go wrapping conauto with Rust bindings, seems to be going ok. At some 
+point I'll add that stuff to this repo.
+
+--- next day ---
+
+Ok, let's continue on those bindings. I think I'll maybe be ditching the 
+Python stuff for now, since I don't want to also create bindings into python,
+which would also involve integrating with Networkx somehow, which isn't fun.
+
+Instead, I think I'll just write my algorithm in Rust. I also think that the
+algorithm might end up being just a variation of the Ullman algorithm, so 
+that should be a good place to start. I think I already have a Rust 
+implementation of it too, which is great.
